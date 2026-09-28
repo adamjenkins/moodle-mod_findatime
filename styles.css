@@ -125,3 +125,69 @@
 .path-mod-findatime .mod-findatime-noslot {
     background-color: transparent;
 }
+
+/* Heatmap: darker = more members available; the count is always printed as text too. */
+.path-mod-findatime .mod-findatime-heatlayout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.path-mod-findatime .mod-findatime-heatlayout .mod-findatime-scroll {
+    flex: 1 1 32rem;
+}
+
+.path-mod-findatime .mod-findatime-heatside {
+    flex: 1 1 16rem;
+    max-width: 28rem;
+}
+
+.path-mod-findatime .mod-findatime-heat {
+    min-width: 3rem;
+    height: 1.75rem;
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+    color: #212529;
+    font-size: 0.85rem;
+    line-height: 1;
+    text-align: center;
+}
+
+.path-mod-findatime .mod-findatime-heat[data-level="1"] {
+    background-color: #d1e7dd;
+}
+
+.path-mod-findatime .mod-findatime-heat[data-level="2"] {
+    background-color: #a3cfbb;
+}
+
+.path-mod-findatime .mod-findatime-heat[data-level="3"] {
+    border-color: #0f5132;
+    background-color: #198754;
+    color: #fff;
+}
+
+.path-mod-findatime .mod-findatime-heat[data-level="4"] {
+    border-color: #051b11;
+    background-color: #0f5132;
+    color: #fff;
+}
+
+.path-mod-findatime .mod-findatime-plus {
+    font-size: 0.7rem;
+}
+
+.path-mod-findatime .mod-findatime-pending {
+    color: #495057;
+}
+
+.path-mod-findatime .mod-findatime-candidate {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+
+.path-mod-findatime .mod-findatime-candidate-best {
+    border-color: #198754;
+    border-width: 2px;
+}

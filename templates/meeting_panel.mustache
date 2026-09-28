@@ -1,0 +1,71 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_findatime/meeting_panel
+
+    The meeting of one group.
+
+    Data attributes required for JS:
+    * data-region="mod-findatime-meeting", data-cmid, data-groupid, data-action="confirm", data-action="cancel"
+
+    Context variables required for this template:
+    * cmid, groupid - Course module and group.
+    * confirmed - Whether a meeting is confirmed: time, endtime, duration, location (HTML), auto, confirmedby, calendarurl.
+    * cancelled - Whether the meeting was cancelled.
+    * canconfirm - Whether the user may confirm, change or cancel.
+    * autoconfirmpending, autoconfirmtime - A pending automatic confirmation.
+
+    Example context (json):
+    {
+        "cmid": 12,
+        "groupid": 3,
+        "confirmed": true,
+        "time": "Monday, 5 October 2026, 9:00 AM",
+        "endtime": "10:00 AM",
+        "duration": "1 hour",
+        "location": "Room 101",
+        "auto": false,
+        "confirmedby": "Tessa Teacher",
+        "calendarurl": "#",
+        "cancelled": false,
+        "canconfirm": true,
+        "autoconfirmpending": false
+    }
+}}
+<div class="mod-findatime-meeting card mb-3" data-region="mod-findatime-meeting" data-cmid="{{cmid}}" data-groupid="{{groupid}}">
+    <div class="card-body">
+        <h3 class="h5 card-title">{{#str}}meeting, mod_findatime{{/str}}</h3>
+        {{#confirmed}}
+        <p class="mb-1 mod-findatime-meetingtime"><strong>{{time}}</strong> &ndash; {{endtime}} ({{duration}})</p>
+        {{#location}}<div class="mb-1 mod-findatime-location">{{#str}}location, mod_findatime{{/str}}: {{{location}}}</div>{{/location}}
+        <p class="small mb-2">{{#auto}}{{#str}}confirmedautomatically, mod_findatime{{/str}}{{/auto}}{{^auto}}{{#confirmedby}}{{#str}}confirmedby, mod_findatime, {{confirmedby}}{{/str}}{{/confirmedby}}{{/auto}}
+            <a href="{{calendarurl}}">{{#str}}viewincalendar, mod_findatime{{/str}}</a></p>
+        {{/confirmed}}
+        {{^confirmed}}
+        <p class="mb-2">{{#cancelled}}{{#str}}meetingcancelled, mod_findatime{{/str}} {{/cancelled}}{{#str}}notconfirmed, mod_findatime{{/str}}</p>
+        {{#autoconfirmpending}}<p class="mb-2">{{#str}}autoconfirmwill, mod_findatime, {{autoconfirmtime}}{{/str}}</p>{{/autoconfirmpending}}
+        {{/confirmed}}
+        {{#canconfirm}}
+        <button type="button" class="btn btn-primary btn-sm" data-action="confirm" data-groupid="{{groupid}}">
+            {{#confirmed}}{{#str}}changetime, mod_findatime{{/str}}{{/confirmed}}{{^confirmed}}{{#str}}confirmatime, mod_findatime{{/str}}{{/confirmed}}
+        </button>
+        {{#confirmed}}
+        <button type="button" class="btn btn-outline-danger btn-sm" data-action="cancel" data-groupid="{{groupid}}">{{#str}}cancelmeeting, mod_findatime{{/str}}</button>
+        {{/confirmed}}
+        {{/canconfirm}}
+    </div>
+</div>

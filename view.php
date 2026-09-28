@@ -41,9 +41,33 @@ findatime_view($findatime, $course, $cm, $context);
 
 $access = new \mod_findatime\local\access($findatime, $cm, $context);
 
+// Which group to show: the core activity group, limited to groups this user may see. Users with
+// access to all groups may pick "All participants" in the menu, which means nothing here, so they
+// fall back to a group of their own or are asked to choose one.
+$groupid = 0;
+$viewable = $access->viewable_groups($USER->id);
+if ($access->uses_groups()) {
+    $groupid = (int)groups_get_activity_group($cm, true);
+    if (!array_key_exists($groupid, $viewable)) {
+        $own = array_values(array_intersect($access->user_groupids($USER->id), array_keys($viewable)));
+        $groupid = $own ? $own[0] : 0;
+    }
+}
+
 echo $OUTPUT->header();
 
 echo html_writer::tag('p', s(\mod_findatime\output\helper::timezone_notice($findatime)), ['class' => 'mod-findatime-tznotice']);
+
+if ($access->uses_groups()) {
+    echo groups_print_activity_menu($cm, $PAGE->url, true);
+}
+
+$showgroup = array_key_exists($groupid, $viewable);
+if ($showgroup) {
+    $panel = new \mod_findatime\output\meeting_panel($access, $groupid, $USER->id);
+    echo $OUTPUT->render_from_template('mod_findatime/meeting_panel', $panel->export_for_template($OUTPUT));
+    $PAGE->requires->js_call_amd('mod_findatime/meeting', 'init', [$cm->id, $groupid]);
+}
 
 // Teachers and other non-respondents only see the group overlap.
 if (has_capability('mod/findatime:respond', $context)) {
@@ -54,6 +78,18 @@ if (has_capability('mod/findatime:respond', $context)) {
     } else {
         echo $OUTPUT->notification(get_string('errornogroup', 'findatime'), \core\output\notification::NOTIFY_INFO);
     }
+}
+
+if ($showgroup) {
+    $heading = $access->uses_groups()
+        ? get_string('groupoverlapof', 'findatime', $viewable[$groupid])
+        : get_string('groupoverlap', 'findatime');
+    echo $OUTPUT->heading($heading, 3);
+    $heatmap = new \mod_findatime\output\heatmap($access, $groupid, $USER->id);
+    echo $OUTPUT->render_from_template('mod_findatime/heatmap', $heatmap->export_for_template($OUTPUT));
+} else if ($access->uses_groups()) {
+    $message = $viewable ? get_string('choosegroup', 'findatime') : get_string('nogroupsvisible', 'findatime');
+    echo $OUTPUT->notification($message, \core\output\notification::NOTIFY_INFO);
 }
 
 echo $OUTPUT->footer();

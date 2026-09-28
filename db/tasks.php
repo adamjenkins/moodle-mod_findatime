@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details for mod_findatime.
+ * Scheduled tasks of mod_findatime.
  *
  * @package    mod_findatime
  * @copyright  2026 Adam Jenkins <adam@wisecat.net>
@@ -24,10 +24,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_findatime';
-$plugin->version = 2026092802;
-$plugin->release = '0.1.0';
-$plugin->maturity = MATURITY_ALPHA;
-// Moodle 4.5 LTS.
-$plugin->requires = 2024100700;
-$plugin->supported = [405, 503];
+$tasks = [
+    [
+        'classname' => '\mod_findatime\task\auto_confirm',
+        'blocking' => 0,
+        'minute' => '*/5',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
+];

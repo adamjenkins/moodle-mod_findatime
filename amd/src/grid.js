@@ -376,7 +376,7 @@ export const init = (id) => {
         {key: 'savestatuserror', component: 'mod_findatime'},
     ]).then((s) => {
         new Grid(root, {
-            status: {0: s[0], 1: s[1], 2: s[2]},
+            status: [s[0], s[1], s[2]],
             unsaved: s[3],
             saving: s[4],
             saved: s[5],

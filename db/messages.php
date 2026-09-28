@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details for mod_findatime.
+ * Message providers of mod_findatime.
  *
  * @package    mod_findatime
  * @copyright  2026 Adam Jenkins <adam@wisecat.net>
@@ -24,10 +24,17 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_findatime';
-$plugin->version = 2026092802;
-$plugin->release = '0.1.0';
-$plugin->maturity = MATURITY_ALPHA;
-// Moodle 4.5 LTS.
-$plugin->requires = 2024100700;
-$plugin->supported = [405, 503];
+$messageproviders = [
+    'meetingconfirmed' => [
+        'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ],
+    ],
+    'meetingcancelled' => [
+        'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ],
+    ],
+];

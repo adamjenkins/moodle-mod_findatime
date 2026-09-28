@@ -14,20 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace mod_findatime;
+
 /**
- * Version details for mod_findatime.
+ * Event observers.
  *
  * @package    mod_findatime
  * @copyright  2026 Adam Jenkins <adam@wisecat.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'mod_findatime';
-$plugin->version = 2026092802;
-$plugin->release = '0.1.0';
-$plugin->maturity = MATURITY_ALPHA;
-// Moodle 4.5 LTS.
-$plugin->requires = 2024100700;
-$plugin->supported = [405, 503];
+class observer {
+    /**
+     * A group was deleted: its meetings go with it (core already deletes the group's calendar events).
+     *
+     * @param \core\event\group_deleted $event The event.
+     */
+    public static function group_deleted(\core\event\group_deleted $event): void {
+        \mod_findatime\local\meetings::delete_for_group((int)$event->objectid);
+    }
+}

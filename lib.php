@@ -193,3 +193,84 @@ function findatime_view($findatime, $course, $cm, $context) {
     $completion = new completion_info($course);
     $completion->set_module_viewed($cm);
 }
+
+/**
+ * Add the overview page to the activity's navigation.
+ *
+ * @param settings_navigation $settingsnav Settings navigation.
+ * @param navigation_node $node The activity's node.
+ */
+function findatime_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $node) {
+    $cm = $settingsnav->get_page()->cm;
+    if (!$cm || !has_capability('mod/findatime:viewreports', $cm->context)) {
+        return;
+    }
+    $node->add(
+        get_string('overview', 'findatime'),
+        new moodle_url('/mod/findatime/overview.php', ['id' => $cm->id]),
+        navigation_node::TYPE_SETTING,
+        null,
+        'mod_findatime_overview'
+    );
+}
+
+/**
+ * Rebuild the calendar events of one, a course's or all instances from their records.
+ *
+ * @param int $courseid Course id (0 = all courses).
+ * @param int|stdClass|null $instance Instance id or record.
+ * @param stdClass|cm_info|null $cm Course module (unused).
+ * @return bool
+ */
+function findatime_refresh_events($courseid = 0, $instance = null, $cm = null) {
+    global $DB;
+    if ($instance) {
+        $instances = [is_object($instance) ? $instance : $DB->get_record('findatime', ['id' => $instance], '*', MUST_EXIST)];
+    } else if ($courseid) {
+        $instances = $DB->get_records('findatime', ['course' => $courseid]);
+    } else {
+        $instances = $DB->get_records('findatime');
+    }
+    foreach ($instances as $findatime) {
+        \mod_findatime\local\calendar_sync::rebuild($findatime);
+    }
+    return true;
+}
+
+/**
+ * The action of the "mark your availability" timeline event; hidden once the user has responded.
+ *
+ * @param calendar_event $event The event.
+ * @param \core_calendar\action_factory $factory Action factory.
+ * @param int $userid User id (0 = current user).
+ * @return \core_calendar\local\event\entities\action_interface|null
+ */
+function mod_findatime_core_calendar_provide_event_action(
+    calendar_event $event,
+    \core_calendar\action_factory $factory,
+    int $userid = 0
+) {
+    global $DB, $USER;
+    $userid = $userid ?: (int)$USER->id;
+    if ($event->eventtype !== \mod_findatime\local\calendar_sync::EVENTTYPE_DUE) {
+        return null;
+    }
+    $cm = get_fast_modinfo($event->courseid, $userid)->instances['findatime'][$event->instance] ?? null;
+    if (!$cm || !$cm->uservisible) {
+        return null;
+    }
+    $findatime = $DB->get_record('findatime', ['id' => $event->instance]);
+    if (!$findatime) {
+        return null;
+    }
+    $access = new \mod_findatime\local\access($findatime, $cm);
+    if (!$access->can_respond($userid) || \mod_findatime\local\availability::has_responded($findatime->id, $userid)) {
+        return null;
+    }
+    return $factory->create_instance(
+        get_string('markavailability', 'findatime'),
+        new moodle_url('/mod/findatime/view.php', ['id' => $cm->id]),
+        1,
+        $event->timestart > time()
+    );
+}

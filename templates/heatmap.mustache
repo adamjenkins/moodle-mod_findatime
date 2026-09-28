@@ -1,0 +1,116 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_findatime/heatmap
+
+    Overlap heatmap of one group, with a detail panel and the best meeting times.
+
+    Classes required for JS:
+    * mod-findatime-heat
+
+    Data attributes required for JS:
+    * data-region="mod-findatime-heatmap", data-cmid, data-groupid, data-slotdata, data-slot, data-row, data-col,
+      data-region="heatdetail", data-region="candidates", data-region="responded"
+
+    Context variables required for this template:
+    * uniqid - Unique id of the container.
+    * cmid - Course module id.
+    * groupid - Group shown.
+    * membercount - Members of the group.
+    * respondedcount - Members who have submitted availability.
+    * haspending, pendinglist - Members who have not.
+    * days, rows - Grid layout; cells carry available, ifneedbe, level, hasany, summary.
+    * hasslots - Whether there are slots.
+    * slotdata - JSON list of per-slot names.
+    * candidateslist - Context of mod_findatime/candidates.
+
+    Example context (json):
+    {
+        "uniqid": "mod-findatime-heatmap-1",
+        "cmid": 12,
+        "groupid": 3,
+        "membercount": 2,
+        "respondedcount": 1,
+        "haspending": true,
+        "pendinglist": "Bob NewYork",
+        "days": [{"key": "2026-10-05", "label": "Monday, 5 October 2026", "weekday": "Mon", "date": "05 Oct"}],
+        "rows": [{"key": "540:0", "label": "09:00", "hourstart": false, "cells": [
+            {"isslot": true, "slotstart": 1791190800, "label": "Monday, 5 October 2026, 9:00 AM", "available": 1,
+             "ifneedbe": 0, "level": 2, "hasany": true, "summary": "1 of 2 available", "row": 0, "col": 0}
+        ]}],
+        "hasslots": true,
+        "slotdata": "[]",
+        "candidateslist": {"groupid": 3, "membercount": 2, "canconfirm": false, "hascandidates": false, "candidates": []}
+    }
+}}
+<div id="{{uniqid}}" class="mod-findatime-heatmap" data-region="mod-findatime-heatmap" data-cmid="{{cmid}}"
+    data-groupid="{{groupid}}" data-membercount="{{membercount}}" data-slotdata="{{slotdata}}">
+    <p data-region="responded">
+        {{#str}}respondedcount, mod_findatime, {"responded": {{respondedcount}}, "members": {{membercount}} }{{/str}}
+        {{#haspending}}<span class="mod-findatime-pending">{{#str}}pendinglist, mod_findatime, {{pendinglist}}{{/str}}</span>{{/haspending}}
+    </p>
+    {{#hasslots}}
+    <div class="mod-findatime-heatlayout">
+        <div class="mod-findatime-scroll">
+            <table class="mod-findatime-table" role="grid" aria-label="{{#str}}groupoverlap, mod_findatime{{/str}}"
+                aria-describedby="{{uniqid}}-help">
+                <thead>
+                    <tr>
+                        <th scope="col"><span class="mod-findatime-sr">{{#str}}time, mod_findatime{{/str}}</span></th>
+                        {{#days}}
+                        <th scope="col" class="mod-findatime-day" aria-label="{{label}}">
+                            <span aria-hidden="true">{{weekday}}<br>{{date}}</span>
+                        </th>
+                        {{/days}}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#rows}}
+                    <tr{{#hourstart}} class="mod-findatime-hour"{{/hourstart}}>
+                        <th scope="row" class="mod-findatime-time">{{label}}</th>
+                        {{#cells}}
+                        {{#isslot}}
+                        <td role="gridcell" class="mod-findatime-heat" tabindex="-1" data-slot="{{slotstart}}"
+                            data-row="{{row}}" data-col="{{col}}" data-level="{{level}}" data-label="{{label}}"
+                            aria-label="{{label}}: {{summary}}">{{#hasany}}{{available}}{{#ifneedbe}}<span class="mod-findatime-plus">+{{ifneedbe}}</span>{{/ifneedbe}}{{/hasany}}</td>
+                        {{/isslot}}
+                        {{^isslot}}
+                        <td class="mod-findatime-noslot"></td>
+                        {{/isslot}}
+                        {{/cells}}
+                    </tr>
+                    {{/rows}}
+                </tbody>
+            </table>
+        </div>
+        <div class="mod-findatime-heatside">
+            <p class="mod-findatime-help" id="{{uniqid}}-help">{{#str}}heathelp, mod_findatime{{/str}}</p>
+            <div class="mod-findatime-heatdetail card card-body mb-3" data-region="heatdetail" aria-live="polite">
+                {{#str}}heatdetailempty, mod_findatime{{/str}}
+            </div>
+            <div data-region="candidates">
+                {{#candidateslist}}{{> mod_findatime/candidates}}{{/candidateslist}}
+            </div>
+        </div>
+    </div>
+    {{/hasslots}}
+</div>
+{{#js}}
+require(['mod_findatime/heatmap'], function(heatmap) {
+    heatmap.init('{{uniqid}}');
+});
+{{/js}}

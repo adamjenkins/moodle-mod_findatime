@@ -1,0 +1,64 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_findatime/candidates
+
+    The best meeting times of a group.
+
+    Data attributes required for JS:
+    * data-action="confirm", data-timestart, data-groupid
+
+    Context variables required for this template:
+    * groupid - Group.
+    * membercount - Members of the group.
+    * canconfirm - Whether the user may confirm a time.
+    * hascandidates - Whether there are any.
+    * candidates - List of: timestart, label, available, ifneedbe, availablelist, ifneedbelist, hasifneedbe, first.
+
+    Example context (json):
+    {
+        "groupid": 3,
+        "membercount": 2,
+        "canconfirm": true,
+        "hascandidates": true,
+        "candidates": [
+            {"timestart": 1791190800, "label": "Monday, 5 October 2026, 9:00 AM", "available": 2, "ifneedbe": 0,
+             "availablelist": "Alice London, Bob NewYork", "ifneedbelist": "", "hasifneedbe": false, "first": true}
+        ]
+    }
+}}
+<h4 class="h5">{{#str}}besttimes, mod_findatime{{/str}}</h4>
+{{#hascandidates}}
+<ol class="mod-findatime-candidates list-unstyled">
+    {{#candidates}}
+    <li class="mod-findatime-candidate mb-2 p-2{{#first}} mod-findatime-candidate-best{{/first}}">
+        <div><strong>{{label}}</strong></div>
+        <div>{{#str}}candidateavailable, mod_findatime, {"available": {{available}}, "members": {{membercount}} }{{/str}}{{#availablelist}}: {{availablelist}}{{/availablelist}}</div>
+        {{#hasifneedbe}}
+        <div>{{#str}}candidateifneedbe, mod_findatime, {{ifneedbe}}{{/str}}: {{ifneedbelist}}</div>
+        {{/hasifneedbe}}
+        {{#canconfirm}}
+        <button type="button" class="btn btn-sm btn-primary mt-1" data-action="confirm" data-timestart="{{timestart}}"
+            data-groupid="{{groupid}}">{{#str}}confirmthistime, mod_findatime{{/str}}</button>
+        {{/canconfirm}}
+    </li>
+    {{/candidates}}
+</ol>
+{{/hascandidates}}
+{{^hascandidates}}
+<p>{{#str}}nocandidates, mod_findatime{{/str}}</p>
+{{/hascandidates}}

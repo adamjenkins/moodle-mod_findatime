@@ -1,0 +1,102 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_findatime/overview_report
+
+    Teacher overview of all groups.
+
+    Context variables required for this template:
+    * groups - List of: groupname, members, responded, rate, viewurl, confirmed, meetingtime, location (HTML),
+      auto, confirmedby, cancelled, noavailability, pending.
+    * hasgroups, usesgroups - Flags.
+    * totalmembers, totalresponded - Totals.
+    * ungrouped, hasungrouped - Participants who belong to no group.
+    * autoconfirm, autoconfirmdone - Automatic confirmation time, and whether it has run.
+
+    Example context (json):
+    {
+        "groups": [
+            {"groupname": "Group 1", "members": 2, "responded": 1, "rate": 50, "viewurl": "#", "confirmed": true,
+             "meetingtime": "Monday, 5 October 2026, 9:00 AM", "location": "Room 1", "auto": false,
+             "confirmedby": "Tessa Teacher", "cancelled": false, "noavailability": false, "pending": false}
+        ],
+        "hasgroups": true,
+        "usesgroups": true,
+        "totalmembers": 2,
+        "totalresponded": 1,
+        "ungrouped": 0,
+        "hasungrouped": false,
+        "autoconfirm": "",
+        "autoconfirmdone": false
+    }
+}}
+<div class="mod-findatime-overview">
+    {{#autoconfirm}}
+    <p>{{#autoconfirmdone}}{{#str}}autoconfirmran, mod_findatime, {{autoconfirm}}{{/str}}{{/autoconfirmdone}}{{^autoconfirmdone}}{{#str}}autoconfirmwill, mod_findatime, {{autoconfirm}}{{/str}}{{/autoconfirmdone}}</p>
+    {{/autoconfirm}}
+    {{#hasungrouped}}
+    <div class="alert alert-warning">{{#str}}ungroupedwarning, mod_findatime, {{ungrouped}}{{/str}}</div>
+    {{/hasungrouped}}
+    {{#hasgroups}}
+    <div class="table-responsive">
+        <table class="table table-striped generaltable">
+            <thead>
+                <tr>
+                    <th scope="col">{{#usesgroups}}{{#str}}group{{/str}}{{/usesgroups}}{{^usesgroups}}{{#str}}participants{{/str}}{{/usesgroups}}</th>
+                    <th scope="col">{{#str}}responses, mod_findatime{{/str}}</th>
+                    <th scope="col">{{#str}}meeting, mod_findatime{{/str}}</th>
+                    <th scope="col"><span class="mod-findatime-sr">{{#str}}actions{{/str}}</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#groups}}
+                <tr>
+                    <th scope="row">{{groupname}}</th>
+                    <td>
+                        {{#str}}respondedcount, mod_findatime, {"responded": {{responded}}, "members": {{members}} }{{/str}}
+                        <div class="progress mt-1 mod-findatime-rate" role="progressbar" aria-label="{{#str}}responserate, mod_findatime{{/str}}"
+                            aria-valuenow="{{rate}}" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar bg-success" style="width: {{rate}}%">{{rate}}%</div>
+                        </div>
+                    </td>
+                    <td>
+                        {{#confirmed}}
+                        <div><strong>{{meetingtime}}</strong></div>
+                        {{#location}}<div>{{{location}}}</div>{{/location}}
+                        <div class="small">{{#auto}}{{#str}}confirmedautomatically, mod_findatime{{/str}}{{/auto}}{{^auto}}{{#str}}confirmedby, mod_findatime, {{confirmedby}}{{/str}}{{/auto}}</div>
+                        {{/confirmed}}
+                        {{#cancelled}}{{#str}}meetingcancelled, mod_findatime{{/str}}{{/cancelled}}
+                        {{#noavailability}}{{#str}}autoconfirmnone, mod_findatime{{/str}}{{/noavailability}}
+                        {{#pending}}{{#str}}notconfirmed, mod_findatime{{/str}}{{/pending}}
+                    </td>
+                    <td><a href="{{viewurl}}">{{#str}}viewgroup, mod_findatime{{/str}}<span class="mod-findatime-sr">: {{groupname}}</span></a></td>
+                </tr>
+                {{/groups}}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th scope="row">{{#str}}total{{/str}}</th>
+                    <td colspan="3">{{#str}}respondedcount, mod_findatime, {"responded": {{totalresponded}}, "members": {{totalmembers}} }{{/str}}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {{/hasgroups}}
+    {{^hasgroups}}
+    <div class="alert alert-info">{{#str}}nogroups, mod_findatime{{/str}}</div>
+    {{/hasgroups}}
+</div>
