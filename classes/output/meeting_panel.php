@@ -67,7 +67,9 @@ class meeting_panel implements \renderable, \templatable {
             'groupid' => $this->groupid,
             'confirmed' => $confirmed,
             'cancelled' => $meeting && !$confirmed,
-            'canconfirm' => $this->access->can_confirm($this->groupid, $this->userid),
+            'canconfirm' => $this->access->can_confirm($this->groupid, $this->userid)
+                && !($confirmed && meetings::has_ended($meeting)),
+            'ended' => $confirmed && meetings::has_ended($meeting),
             'autoconfirmpending' => false,
         ];
         if ($confirmed) {

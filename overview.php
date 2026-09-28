@@ -38,7 +38,7 @@ $PAGE->set_heading(format_string($course->fullname));
 $PAGE->activityheader->disable();
 
 $access = new \mod_findatime\local\access($findatime, $cm, $context);
-$report = new \mod_findatime\output\overview_report($access);
+$report = new \mod_findatime\output\overview_report($access, (int)$USER->id);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($findatime->name) . ': ' . get_string('overview', 'findatime'));

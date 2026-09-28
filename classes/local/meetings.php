@@ -126,6 +126,10 @@ class meetings {
 
         $now = time();
         $existing = self::get_current($findatime->id, $groupid);
+        if ($existing && $source === self::SOURCE_AUTO) {
+            // Someone decided while the automatic confirmation was choosing: their decision stands.
+            throw new \moodle_exception('errorautoconfirmdecided', 'findatime');
+        }
         $previous = ($existing && (int)$existing->status === self::STATUS_CONFIRMED) ? (int)$existing->timestart : 0;
         $meeting = $existing ?: (object)[
             'findatimeid' => $findatime->id,
@@ -181,6 +185,9 @@ class meetings {
         if (!$meeting || (int)$meeting->status !== self::STATUS_CONFIRMED) {
             throw new \moodle_exception('errornomeeting', 'findatime');
         }
+        if (self::has_ended($meeting)) {
+            throw new \moodle_exception('errormeetingended', 'findatime');
+        }
         $meeting->status = self::STATUS_CANCELLED;
         $meeting->usermodified = $actorid;
         $meeting->timemodified = time();
@@ -197,6 +204,16 @@ class meetings {
 
         self::notify($access, $meeting, 'meetingcancelled', $actorid);
         return $meeting;
+    }
+
+    /**
+     * Whether a meeting is over.
+     *
+     * @param \stdClass $meeting Meeting record.
+     * @return bool
+     */
+    public static function has_ended(\stdClass $meeting): bool {
+        return (int)$meeting->timestart + (int)$meeting->duration * MINSECS <= time();
     }
 
     /**
@@ -240,8 +257,9 @@ class meetings {
         }
         $from = $actorid > 0 ? \core_user::get_user($actorid) : \core_user::get_noreply_user();
         $url = new \moodle_url('/mod/findatime/view.php', ['id' => $cm->id, 'group' => $meeting->groupid]);
-        $groupname = $meeting->groupid ? groups_get_group_name($meeting->groupid) : '';
-        $activityname = format_string($findatime->name, true, ['context' => $context]);
+        // Plain text: the messages are FORMAT_PLAIN and the HTML version is escaped as a whole below.
+        $groupname = $meeting->groupid ? access::group_name((string)groups_get_group_name($meeting->groupid), $context) : '';
+        $activityname = format_string($findatime->name, true, ['context' => $context, 'escape' => false]);
 
         foreach (array_keys($members) as $userid) {
             $recipient = \core_user::get_user($userid);
@@ -258,7 +276,7 @@ class meetings {
                 );
                 $a = (object)[
                     'name' => $activityname,
-                    'group' => $groupname !== '' ? ' (' . format_string($groupname, true, ['context' => $context]) . ')' : '',
+                    'group' => $groupname !== '' ? ' (' . $groupname . ')' : '',
                     'time' => $time,
                     'duration' => format_time((int)$meeting->duration * MINSECS),
                     'location' => (string)$meeting->location,

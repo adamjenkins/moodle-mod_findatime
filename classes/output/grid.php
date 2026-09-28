@@ -69,7 +69,10 @@ class grid implements \renderable, \templatable {
      */
     public function export_for_template(renderer_base $output): array {
         $slots = new slots($this->findatime);
-        $statuses = availability::get_user_statuses($this->findatime->id, $this->userid);
+        $statuses = availability::effective(
+            $this->findatime,
+            availability::get_user_statuses($this->findatime->id, $this->userid)
+        );
         $labels = self::status_labels();
         $layout = $slots->layout(\core_date::get_user_timezone_object(), function (int $start) use ($statuses, $labels): array {
             $status = $statuses[$start] ?? 0;

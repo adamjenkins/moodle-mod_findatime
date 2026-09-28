@@ -1,0 +1,17 @@
+{
+    "name": "adamjenkins/moodle-mod_findatime",
+    "description": "A Moodle activity where the members of a course group mark their availability, see where it overlaps and confirm a meeting that goes into the group calendar",
+    "type": "moodle-mod",
+    "keywords": [
+        "moodle",
+        "groups",
+        "scheduling",
+        "meeting",
+        "availability"
+    ],
+    "license": "GPL-3.0-or-later",
+    "require": {
+        "moodle/moodle": ">=4.5 <5.4",
+        "moodle/composer-installer": "^1.0"
+    }
+}

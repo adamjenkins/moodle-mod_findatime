@@ -26,7 +26,8 @@
     * cmid, groupid - Course module and group.
     * confirmed - Whether a meeting is confirmed: time, endtime, duration, location (HTML), auto, confirmedby, calendarurl.
     * cancelled - Whether the meeting was cancelled.
-    * canconfirm - Whether the user may confirm, change or cancel.
+    * canconfirm - Whether the user may confirm, change or cancel (never once the meeting has ended).
+    * ended - Whether the confirmed meeting is over.
     * autoconfirmpending, autoconfirmtime - A pending automatic confirmation.
 
     Example context (json):
@@ -43,6 +44,7 @@
         "calendarurl": "#",
         "cancelled": false,
         "canconfirm": true,
+        "ended": false,
         "autoconfirmpending": false
     }
 }}
@@ -52,6 +54,7 @@
         {{#confirmed}}
         <p class="mb-1 mod-findatime-meetingtime"><strong>{{time}}</strong> &ndash; {{endtime}} ({{duration}})</p>
         {{#location}}<div class="mb-1 mod-findatime-location">{{#str}}location, mod_findatime{{/str}}: {{{location}}}</div>{{/location}}
+        {{#ended}}<p class="mb-1">{{#str}}meetingended, mod_findatime{{/str}}</p>{{/ended}}
         <p class="small mb-2">{{#auto}}{{#str}}confirmedautomatically, mod_findatime{{/str}}{{/auto}}{{^auto}}{{#confirmedby}}{{#str}}confirmedby, mod_findatime, {{confirmedby}}{{/str}}{{/confirmedby}}{{/auto}}
             <a href="{{calendarurl}}">{{#str}}viewincalendar, mod_findatime{{/str}}</a></p>
         {{/confirmed}}

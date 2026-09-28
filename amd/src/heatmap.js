@@ -175,10 +175,13 @@ class Heatmap {
      * @returns {Promise}
      */
     refresh() {
+        // Refreshes can overlap when saves follow each other; only the newest may draw.
+        this.sequence = (this.sequence || 0) + 1;
+        const sequence = this.sequence;
         return Promise.resolve(Ajax.call([{
             methodname: 'mod_findatime_get_overlap',
             args: {cmid: this.cmid, groupid: this.groupid},
-        }])[0]).then((data) => this.redraw(data)).catch(Notification.exception);
+        }])[0]).then((data) => (sequence === this.sequence ? this.redraw(data) : null)).catch(Notification.exception);
     }
 
     /**

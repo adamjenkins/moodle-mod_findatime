@@ -89,9 +89,10 @@ final class backup_restore_test extends \advanced_testcase {
      *
      * @param bool $users Include user data.
      * @param int $shift Seconds to move the course start date by.
+     * @param callable|null $edit Optional function(string $xml): string rewriting findatime.xml before restoring.
      * @return \stdClass The restored instance.
      */
-    protected function backup_and_restore(bool $users, int $shift = 0): \stdClass {
+    protected function backup_and_restore(bool $users, int $shift = 0, ?callable $edit = null): \stdClass {
         global $DB, $USER;
         $bc = new \backup_controller(
             \backup::TYPE_1COURSE,
@@ -106,9 +107,19 @@ final class backup_restore_test extends \advanced_testcase {
         $file = $bc->get_results()['backup_destination'];
         $bc->destroy();
 
-        $dirname = 'findatime_restore_' . (int)$users . '_' . $shift;
-        $file->extract_to_pathname(get_file_packer('application/vnd.moodle.backup'), make_backup_temp_directory($dirname));
-        $newcourseid = \restore_dbops::create_new_course('Restored', 'restored' . (int)$users . $shift, $this->course->category);
+        $dirname = 'findatime_restore_' . (int)$users . '_' . $shift . ($edit ? '_edited' : '');
+        $path = make_backup_temp_directory($dirname);
+        $file->extract_to_pathname(get_file_packer('application/vnd.moodle.backup'), $path);
+        if ($edit) {
+            $xmlfiles = glob($path . '/activities/findatime_*/findatime.xml');
+            $this->assertCount(1, $xmlfiles);
+            file_put_contents($xmlfiles[0], $edit(file_get_contents($xmlfiles[0])));
+        }
+        $newcourseid = \restore_dbops::create_new_course(
+            'Restored',
+            'restored' . (int)$users . $shift . ($edit ? 'e' : ''),
+            $this->course->category
+        );
         $rc = new \restore_controller(
             $dirname,
             $newcourseid,
@@ -154,6 +165,41 @@ final class backup_restore_test extends \advanced_testcase {
         $this->assertCount(2, $events, 'one meeting event and one deadline event, no duplicates');
         $this->assertTrue($DB->record_exists('event', ['id' => $meeting->eventid, 'groupid' => $newgroupid,
             'eventtype' => 'meeting', 'courseid' => $restored->course]));
+    }
+
+    /**
+     * A crafted backup: impossible settings are forced into what the form allows, a second response
+     * for the same user is skipped together with its slots, and a second meeting for the group is dropped.
+     */
+    public function test_restore_crafted_backup(): void {
+        global $DB;
+        $restored = $this->backup_and_restore(true, 0, function (string $xml): string {
+            $xml = preg_replace('~<duration>\d+</duration>(\s*<allowifneedbe>)~', '<duration>1000</duration>$1', $xml, 1, $n1);
+            $xml = preg_replace('~<slotsize>\d+</slotsize>~', '<slotsize>7</slotsize>', $xml, 1, $n2);
+            // Append a copy of student a's response (same user, with its slots) after student b's empty one.
+            // It is a duplicate, so it is skipped; unless its slots are skipped too, they land in the last
+            // restored response, which is b's.
+            preg_match('~<response id="(\d+)">\s*<userid>(\d+)</userid>.*?</response>~s', $xml, $a);
+            $copy = str_replace('<response id="' . $a[1] . '">', '<response id="999999">', $a[0]);
+            $xml = str_replace('</responses>', $copy . '</responses>', $xml, $n3);
+            preg_match('~<meeting id="(\d+)">.*?</meeting>~s', $xml, $m);
+            $dup = str_replace('<meeting id="' . $m[1] . '">', '<meeting id="999998">', $m[0]);
+            $xml = str_replace('</meetings>', $dup . '</meetings>', $xml, $n4);
+            $this->assertSame([1, 1, 1, 1], [$n1, $n2, $n3, $n4], 'every edit applied');
+            return $xml;
+        });
+        $this->assertSame(30, (int)$restored->slotsize);
+        $this->assertSame(120, (int)$restored->duration, 'clamped to the two-hour window, whole slots');
+        $this->assertSame(2, $DB->count_records('findatime_responses', ['findatimeid' => $restored->id]));
+        $this->assertCount(2, availability::get_user_statuses($restored->id, $this->students['a']->id));
+        $this->assertSame(
+            [],
+            availability::get_user_statuses($restored->id, $this->students['b']->id),
+            'the skipped copy\'s slots must not attach to another response'
+        );
+        $this->assertSame(1, $DB->count_records('findatime_meetings', ['findatimeid' => $restored->id]));
+        $this->assertSame(1, $DB->count_records('event', ['modulename' => 'findatime', 'instance' => $restored->id,
+            'eventtype' => 'meeting']));
     }
 
     /**

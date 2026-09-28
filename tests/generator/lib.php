@@ -79,4 +79,64 @@ class mod_findatime_generator extends testing_module_generator {
         $findatime = $DB->get_record('findatime', ['id' => $data['findatimeid']], '*', MUST_EXIST);
         return \mod_findatime\local\availability::save($findatime, (int)$data['userid'], $data['slots'] ?? []);
     }
+
+    /**
+     * Resolve an activity from its course module id.
+     *
+     * @param int $cmid Course module id.
+     * @return array [instance record, course module]
+     */
+    protected function resolve_cm(int $cmid): array {
+        global $DB;
+        $cm = get_coursemodule_from_id('findatime', $cmid, 0, false, MUST_EXIST);
+        return [$DB->get_record('findatime', ['id' => $cm->instance], '*', MUST_EXIST), $cm];
+    }
+
+    /**
+     * The timestamp of a local time on a day of the activity's date range, in the activity timezone.
+     *
+     * @param stdClass $findatime Instance record.
+     * @param int $day Day of the range, 0 = the first day.
+     * @param string $time Local time, HH:MM.
+     * @return int
+     */
+    public function local_time(stdClass $findatime, int $day, string $time): int {
+        $tz = \mod_findatime\local\slots::timezone($findatime->timezone);
+        $date = \mod_findatime\local\slots::civil_date_of_midnight((int)$findatime->datestart, $tz);
+        [$hour, $minute] = array_map('intval', explode(':', $time));
+        return (new \DateTimeImmutable($date . ' 00:00:00', $tz))->modify('+' . $day . ' days')->setTime($hour, $minute)
+            ->getTimestamp();
+    }
+
+    /**
+     * Behat: mark one slot of a user (keeping the user's other slots).
+     *
+     * @param array $data With cmid, userid, day, time (HH:MM, activity timezone) and status (available or ifneedbe).
+     * @return stdClass The response row.
+     */
+    public function create_behat_availability(array $data): stdClass {
+        [$findatime] = $this->resolve_cm((int)$data['cmid']);
+        $statuses = \mod_findatime\local\availability::get_user_statuses($findatime->id, (int)$data['userid']);
+        $slotstart = $this->local_time($findatime, (int)$data['day'], $data['time']);
+        $statuses[$slotstart] = ($data['status'] ?? 'available') === 'ifneedbe' ? 2 : 1;
+        return \mod_findatime\local\availability::save($findatime, (int)$data['userid'], $statuses);
+    }
+
+    /**
+     * Behat: confirm the meeting of a group.
+     *
+     * @param array $data With cmid, groupid (optional), day, time (HH:MM, activity timezone) and location (optional).
+     * @return stdClass The meeting record.
+     */
+    public function create_behat_meeting(array $data): stdClass {
+        [$findatime, $cm] = $this->resolve_cm((int)$data['cmid']);
+        $access = new \mod_findatime\local\access($findatime, $cm);
+        return \mod_findatime\local\meetings::confirm(
+            $access,
+            (int)($data['groupid'] ?? 0),
+            $this->local_time($findatime, (int)$data['day'], $data['time']),
+            (string)($data['location'] ?? ''),
+            0
+        );
+    }
 }

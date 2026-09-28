@@ -31,14 +31,18 @@ use renderer_base;
 class overview_report implements \renderable, \templatable {
     /** @var access Access rules. */
     protected $access;
+    /** @var int Viewing user id. */
+    protected $userid;
 
     /**
      * Constructor.
      *
      * @param access $access Access rules of the activity.
+     * @param int $userid Viewing user: only the groups they may see are listed.
      */
-    public function __construct(access $access) {
+    public function __construct(access $access, int $userid) {
         $this->access = $access;
+        $this->userid = $userid;
     }
 
     /**
@@ -48,7 +52,6 @@ class overview_report implements \renderable, \templatable {
      * @return array
      */
     public function export_for_template(renderer_base $output): array {
-        global $DB;
         $findatime = $this->access->get_findatime();
         $cm = $this->access->get_cm();
         $format = get_string('strftimedaydatetime', 'langconfig');
@@ -62,7 +65,9 @@ class overview_report implements \renderable, \templatable {
         $rows = [];
         $totalmembers = 0;
         $totalresponded = 0;
-        foreach ($this->access->all_groups() as $groupid => $name) {
+        // Only groups the viewer may see: a teacher without access to all groups in separate groups mode
+        // sees their own groups, as everywhere else in Moodle.
+        foreach ($this->access->viewable_groups($this->userid) as $groupid => $name) {
             $members = $this->access->members($groupid);
             $responded = count(availability::get_statuses($findatime->id, array_keys($members)));
             $totalmembers += count($members);

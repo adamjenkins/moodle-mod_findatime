@@ -66,8 +66,7 @@ class heatmap implements \renderable, \templatable {
         $context = $this->access->get_context();
         $slots = new slots($findatime);
         $members = $this->access->members($this->groupid);
-        $statuses = availability::get_statuses($findatime->id, array_keys($members));
-        $overlap = new overlap($slots, array_keys($members), $statuses);
+        $overlap = overlap::for_instance($findatime, array_keys($members), $slots);
 
         $viewfullnames = has_capability('moodle/site:viewfullnames', $context, $this->userid);
         $names = [];

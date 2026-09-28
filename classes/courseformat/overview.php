@@ -75,7 +75,12 @@ class overview extends \core_courseformat\activityoverviewbase {
         $items = [];
 
         if (has_capability('mod/findatime:viewreports', $this->context)) {
-            $members = $access->members(0);
+            // Counted over the groups this teacher may see (all of them with access to all groups).
+            $groups = $access->viewable_groups((int)$USER->id);
+            $members = [];
+            foreach (array_keys($groups) as $groupid) {
+                $members += $access->members($groupid);
+            }
             $responded = count(availability::get_statuses($findatime->id, array_keys($members)));
             $items['responses'] = new overviewitem(
                 name: get_string('responses', 'findatime'),
@@ -85,7 +90,7 @@ class overview extends \core_courseformat\activityoverviewbase {
             );
             $confirmed = 0;
             foreach (meetings::get_for_instance($findatime->id) as $meeting) {
-                if ((int)$meeting->status === meetings::STATUS_CONFIRMED) {
+                if ((int)$meeting->status === meetings::STATUS_CONFIRMED && isset($groups[(int)$meeting->groupid])) {
                     $confirmed++;
                 }
             }
@@ -95,7 +100,7 @@ class overview extends \core_courseformat\activityoverviewbase {
                 content: get_string(
                     'meetingsconfirmedcount',
                     'findatime',
-                    ['confirmed' => $confirmed, 'groups' => count($access->all_groups())]
+                    ['confirmed' => $confirmed, 'groups' => count($groups)]
                 ),
                 textalign: text_align::CENTER,
             );

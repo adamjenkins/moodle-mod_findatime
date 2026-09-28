@@ -324,9 +324,67 @@ function findatime_reset_userdata($data) {
         $status[] = ['component' => $componentstr, 'item' => get_string('resetmeetings', 'findatime'), 'error' => false];
     }
     if (!empty($data->timeshift)) {
-        shift_course_mod_dates('findatime', ['datestart', 'dateend', 'autoconfirm'], $data->timeshift, $data->courseid);
+        $days = (int)round($data->timeshift / DAYSECS);
+        foreach ($DB->get_records('findatime', ['course' => $data->courseid]) as $findatime) {
+            findatime_shift_instance($findatime, $days);
+        }
         $status[] = ['component' => $componentstr, 'item' => get_string('resetdatesshifted', 'findatime'), 'error' => false];
     }
     findatime_refresh_events($data->courseid);
     return $status;
+}
+
+/**
+ * Move an instance's dates, and any kept availability and meetings, by whole days of wall-clock time.
+ *
+ * Core's shift_course_mod_dates() adds seconds, which across a DST change moves a 09:00 slot to
+ * 08:00 or 10:00 local time and strands the availability off the grid; this keeps local times.
+ *
+ * @param stdClass $findatime Instance record.
+ * @param int $days Days to move by (may be negative).
+ */
+function findatime_shift_instance(stdClass $findatime, int $days): void {
+    global $DB;
+    if ($days === 0) {
+        return;
+    }
+    $slots = \mod_findatime\local\slots::class;
+    $tz = $slots::timezone($findatime->timezone);
+    $update = (object)['id' => $findatime->id];
+    foreach (['datestart', 'dateend'] as $field) {
+        $midnight = $slots::civil_midnight($slots::civil_date_of_midnight((int)$findatime->$field, $tz), $tz);
+        $update->$field = $slots::shift_civil_days($midnight, $days, $tz);
+    }
+    if (!empty($findatime->autoconfirm)) {
+        $update->autoconfirm = $slots::shift_civil_days((int)$findatime->autoconfirm, $days, $tz);
+        if ($update->autoconfirm > time()) {
+            $update->autoconfirmdone = 0;
+        }
+    }
+    $DB->update_record('findatime', $update);
+
+    // Update in the direction of the shift, so no row lands on a not yet moved row of the same response.
+    $order = $days > 0 ? 's.slotstart DESC' : 's.slotstart ASC';
+    $rs = $DB->get_recordset_sql("SELECT s.id, s.slotstart
+                                    FROM {findatime_slots} s
+                                    JOIN {findatime_responses} r ON r.id = s.responseid
+                                   WHERE r.findatimeid = ?
+                                ORDER BY $order", [$findatime->id]);
+    foreach ($rs as $slot) {
+        $DB->set_field(
+            'findatime_slots',
+            'slotstart',
+            $slots::shift_civil_days((int)$slot->slotstart, $days, $tz),
+            ['id' => $slot->id]
+        );
+    }
+    $rs->close();
+    foreach ($DB->get_records('findatime_meetings', ['findatimeid' => $findatime->id], '', 'id, timestart') as $meeting) {
+        $DB->set_field(
+            'findatime_meetings',
+            'timestart',
+            $slots::shift_civil_days((int)$meeting->timestart, $days, $tz),
+            ['id' => $meeting->id]
+        );
+    }
 }

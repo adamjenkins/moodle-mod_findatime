@@ -54,6 +54,22 @@ class overlap {
     }
 
     /**
+     * The overlap of an activity's members, with their stored availability under the current settings.
+     *
+     * @param \stdClass $findatime Instance record.
+     * @param int[] $memberids Members whose availability counts.
+     * @param slots|null $slots The slot set, when the caller already has it.
+     * @return overlap
+     */
+    public static function for_instance(\stdClass $findatime, array $memberids, ?slots $slots = null): self {
+        $statuses = availability::get_statuses($findatime->id, $memberids);
+        foreach ($statuses as $userid => $userstatuses) {
+            $statuses[$userid] = availability::effective($findatime, $userstatuses);
+        }
+        return new self($slots ?? new slots($findatime), $memberids, $statuses);
+    }
+
+    /**
      * Number of members.
      *
      * @return int

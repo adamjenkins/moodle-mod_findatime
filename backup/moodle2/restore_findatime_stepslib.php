@@ -80,18 +80,15 @@ class restore_findatime_activity_structure_step extends restore_activity_structu
             $data->$field = \mod_findatime\local\slots::shift_civil_days($midnight, $this->shiftdays, $this->reftz);
         }
         $data->autoconfirm = empty($data->autoconfirm) ? 0 : $this->shift((int)$data->autoconfirm);
-        if (!in_array((int)$data->slotsize, \mod_findatime\local\slots::SLOT_SIZES, true)) {
-            $data->slotsize = 30;
-        }
-        $data->daystartmins = max(0, min(1425, (int)$data->daystartmins));
-        $data->dayendmins = max($data->daystartmins + (int)$data->slotsize, min(1440, (int)$data->dayendmins));
-        $data->duration = max((int)$data->slotsize, min(480, (int)$data->duration));
-        $data->dateend = min((int)$data->dateend, (int)$data->datestart + \mod_findatime\local\slots::MAX_DAYS * DAYSECS);
+        // A backup is untrusted input: the same rules as the settings form.
+        \mod_findatime\local\slots::normalise_settings($data);
         $data->allowifneedbe = empty($data->allowifneedbe) ? 0 : 1;
         $data->memberconfirm = empty($data->memberconfirm) ? 0 : 1;
         $data->completionsubmit = empty($data->completionsubmit) ? 0 : 1;
-        // Without user data there are no meetings, so the automatic confirmation must run again.
-        $data->autoconfirmdone = ($this->get_setting_value('userinfo') && !empty($data->autoconfirmdone)) ? 1 : 0;
+        // The automatic confirmation counts as done only if it ran (user data, so its meetings came along)
+        // and its time is still in the past after the date shift; otherwise it runs again.
+        $data->autoconfirmdone = ($this->get_setting_value('userinfo') && !empty($data->autoconfirmdone)
+            && $data->autoconfirm <= time()) ? 1 : 0;
 
         $newid = $DB->insert_record('findatime', $data);
         $this->apply_activity_instance($newid);
@@ -114,7 +111,8 @@ class restore_findatime_activity_structure_step extends restore_activity_structu
                 ['findatimeid' => $data->findatimeid, 'userid' => $data->userid]
             )
         ) {
-            return;
+            // Skip the slots too, or they would attach to the previously restored response.
+            return self::SKIP_ALL_CHILDREN;
         }
         $newid = $DB->insert_record('findatime_responses', $data);
         $this->set_mapping('findatime_response', $oldid, $newid);
@@ -164,6 +162,10 @@ class restore_findatime_activity_structure_step extends restore_activity_structu
         $data->duration = max(1, (int)$data->duration);
         $data->location = clean_param((string)$data->location, PARAM_TEXT);
         $data->eventid = null;
+        // One meeting per group, as the plugin itself keeps it.
+        if ($DB->record_exists('findatime_meetings', ['findatimeid' => $data->findatimeid, 'groupid' => $data->groupid])) {
+            return;
+        }
         $newid = $DB->insert_record('findatime_meetings', $data);
         $this->set_mapping('findatime_meeting', $oldid, $newid);
     }

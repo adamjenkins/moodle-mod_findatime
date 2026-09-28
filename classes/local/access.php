@@ -79,7 +79,8 @@ class access {
         if (!$this->uses_groups()) {
             return [0];
         }
-        $groups = groups_get_all_groups($this->cm->course, $userid, $this->cm->groupingid, 'g.id');
+        // Participation groups only, like core's groups_get_activity_allowed_groups().
+        $groups = groups_get_all_groups($this->cm->course, $userid, $this->cm->groupingid, 'g.id', false, true);
         return array_map('intval', array_keys($groups));
     }
 
@@ -87,7 +88,8 @@ class access {
      * The groups a user may look at (heatmap and meeting).
      *
      * @param int $userid User id.
-     * @return array groupid => group name (group 0 = all participants, only without group mode).
+     * @return array groupid => group name as plain text, to be escaped at output (group 0 = all participants,
+     *     only without group mode).
      */
     public function viewable_groups(int $userid): array {
         if (!has_capability('mod/findatime:view', $this->context, $userid)) {
@@ -99,9 +101,20 @@ class access {
         $groups = groups_get_activity_allowed_groups($this->cm, $userid);
         $result = [];
         foreach ($groups as $group) {
-            $result[(int)$group->id] = format_string($group->name, true, ['context' => $this->context]);
+            $result[(int)$group->id] = self::group_name($group->name, $this->context);
         }
         return $result;
+    }
+
+    /**
+     * A group name as plain text (filters applied, not HTML-escaped: escape it at the output).
+     *
+     * @param string $name Stored group name.
+     * @param \context $context Context for filters.
+     * @return string
+     */
+    public static function group_name(string $name, \context $context): string {
+        return format_string($name, true, ['context' => $context, 'escape' => false]);
     }
 
     /**
@@ -173,28 +186,21 @@ class access {
      * @return bool
      */
     protected function group_in_grouping(int $groupid): bool {
-        if (!$this->uses_groups()) {
-            return $groupid === 0;
-        }
-        if (empty($this->cm->groupingid)) {
-            $group = groups_get_group($groupid);
-            return $group && (int)$group->courseid === (int)$this->cm->course;
-        }
-        return array_key_exists($groupid, groups_get_all_groups($this->cm->course, 0, $this->cm->groupingid, 'g.id'));
+        return array_key_exists($groupid, $this->all_groups());
     }
 
     /**
-     * The groups the activity works with (all groups of the grouping, or [0]).
+     * The groups the activity works with (all participation groups of the grouping, or [0]).
      *
-     * @return array groupid => name.
+     * @return array groupid => name as plain text, to be escaped at output.
      */
     public function all_groups(): array {
         if (!$this->uses_groups()) {
             return [0 => get_string('allparticipants')];
         }
         $result = [];
-        foreach (groups_get_all_groups($this->cm->course, 0, $this->cm->groupingid) as $group) {
-            $result[(int)$group->id] = format_string($group->name, true, ['context' => $this->context]);
+        foreach (groups_get_all_groups($this->cm->course, 0, $this->cm->groupingid, 'g.*', false, true) as $group) {
+            $result[(int)$group->id] = self::group_name($group->name, $this->context);
         }
         return $result;
     }

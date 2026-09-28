@@ -56,7 +56,7 @@ class get_grid extends external_api {
         [$findatime, , , , $access] = helper::setup($params['cmid']);
 
         $slots = new slots($findatime);
-        $statuses = availability::get_user_statuses($findatime->id, $USER->id);
+        $statuses = availability::effective($findatime, availability::get_user_statuses($findatime->id, $USER->id));
         $usertz = \core_date::get_user_timezone();
         $format = get_string('strftimedaydatetime', 'langconfig');
         $result = [];

@@ -110,7 +110,7 @@ class slots {
         $day = new DateTimeImmutable(self::civil_date_of_midnight($datestart, $tz) . ' 00:00:00', $tz);
         $last = self::civil_date_of_midnight($dateend, $tz);
         $starts = [];
-        for ($i = 0; $i <= self::MAX_DAYS && $day->format('Y-m-d') <= $last; $i++) {
+        for ($i = 0; $i < self::MAX_DAYS && $day->format('Y-m-d') <= $last; $i++) {
             for ($m = $daystartmins; $m + $slotsize <= $dayendmins; $m += $slotsize) {
                 $hour = intdiv($m, 60);
                 $minute = $m % 60;
@@ -126,6 +126,49 @@ class slots {
         $starts = array_keys($starts);
         sort($starts);
         return $starts;
+    }
+
+    /**
+     * Force an instance's timing settings into what the settings form accepts.
+     *
+     * Used where settings arrive without the form, such as a restored backup (untrusted input):
+     * a valid timezone and slot size, a window of at least one slot inside the day, a meeting
+     * length of whole slots that fits the window, whole-day dates with the last day not before the
+     * first, at most MAX_DAYS days and MAX_SLOTS slots, and an automatic confirmation before the
+     * last slot (otherwise none).
+     *
+     * @param \stdClass $record Instance data; changed in place and returned.
+     * @return \stdClass
+     */
+    public static function normalise_settings(\stdClass $record): \stdClass {
+        $tz = self::timezone((string)$record->timezone);
+        $record->timezone = $tz->getName();
+        if (!in_array((int)$record->slotsize, self::SLOT_SIZES, true)) {
+            $record->slotsize = 30;
+        }
+        $size = (int)$record->slotsize;
+        $record->daystartmins = max(0, min(1440 - $size, (int)$record->daystartmins));
+        $record->dayendmins = max($record->daystartmins + $size, min(1440, (int)$record->dayendmins));
+        $window = $record->dayendmins - $record->daystartmins;
+        $duration = intdiv(max($size, min(480, (int)$record->duration)), $size) * $size;
+        $record->duration = max($size, min($duration, intdiv($window, $size) * $size));
+
+        $first = self::civil_date_of_midnight((int)$record->datestart, $tz);
+        $last = max($first, self::civil_date_of_midnight((int)$record->dateend, $tz));
+        $maxdays = min(self::MAX_DAYS, max(1, intdiv(self::MAX_SLOTS, intdiv($window, $size))));
+        $limit = (new DateTimeImmutable($first . ' 00:00:00', $tz))->modify('+' . ($maxdays - 1) . ' days')->format('Y-m-d');
+        $record->datestart = self::civil_midnight($first, $tz);
+        $record->dateend = self::civil_midnight(min($last, $limit), $tz);
+
+        if (!empty($record->autoconfirm)) {
+            $starts = (new self($record))->get_starts();
+            if (!$starts || (int)$record->autoconfirm >= end($starts)) {
+                $record->autoconfirm = 0;
+            }
+        } else {
+            $record->autoconfirm = 0;
+        }
+        return $record;
     }
 
     /**

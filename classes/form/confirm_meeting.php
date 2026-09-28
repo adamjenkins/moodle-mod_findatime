@@ -91,7 +91,7 @@ class confirm_meeting extends \core_form\dynamic_form {
         $findatime = $access->get_findatime();
         $slots = new slots($findatime);
         $members = $access->members($this->get_groupid());
-        $overlap = new overlap($slots, array_keys($members), availability::get_statuses($findatime->id, array_keys($members)));
+        $overlap = overlap::for_instance($findatime, array_keys($members), $slots);
         $counts = [];
         foreach ($overlap->candidates((int)$findatime->duration, 0, 0) as $candidate) {
             $counts[$candidate['timestart']] = $candidate;

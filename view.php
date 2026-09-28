@@ -82,7 +82,7 @@ if (has_capability('mod/findatime:respond', $context)) {
 
 if ($showgroup) {
     $heading = $access->uses_groups()
-        ? get_string('groupoverlapof', 'findatime', $viewable[$groupid])
+        ? get_string('groupoverlapof', 'findatime', s($viewable[$groupid]))
         : get_string('groupoverlap', 'findatime');
     echo $OUTPUT->heading($heading, 3);
     $heatmap = new \mod_findatime\output\heatmap($access, $groupid, $USER->id);

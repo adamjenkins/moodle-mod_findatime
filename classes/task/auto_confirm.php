@@ -17,7 +17,6 @@
 namespace mod_findatime\task;
 
 use mod_findatime\local\access;
-use mod_findatime\local\availability;
 use mod_findatime\local\meetings;
 use mod_findatime\local\overlap;
 use mod_findatime\local\slots;
@@ -27,7 +26,8 @@ use mod_findatime\local\slots;
  * automatic confirmation time has passed.
  *
  * Groups with any meeting row (confirmed or cancelled by a person) are left alone, and groups
- * where nobody is fully available for any future time are skipped. Each activity is processed
+ * where nobody is fully available for any future time are skipped. Hidden activities wait
+ * until they are shown, so students are not notified about an activity they cannot open. Each activity is processed
  * once; changing its automatic confirmation time makes it eligible again.
  *
  * @package    mod_findatime
@@ -57,8 +57,12 @@ class auto_confirm extends \core\task\scheduled_task {
         );
         foreach ($instances as $findatime) {
             $cm = get_coursemodule_from_instance('findatime', $findatime->id, $findatime->course, false, IGNORE_MISSING);
+            if ($cm && empty($cm->deletioninprogress) && empty($cm->visible)) {
+                // Hidden from students: do not tell them about it yet; run once it is shown.
+                continue;
+            }
             if ($cm && empty($cm->deletioninprogress)) {
-                $this->process($findatime, $cm, $now);
+                $this->process($findatime, $cm);
             }
             $DB->set_field('findatime', 'autoconfirmdone', 1, ['id' => $findatime->id]);
         }
@@ -69,9 +73,8 @@ class auto_confirm extends \core\task\scheduled_task {
      *
      * @param \stdClass $findatime Instance record.
      * @param \stdClass $cm Course module.
-     * @param int $now Current time.
      */
-    protected function process(\stdClass $findatime, \stdClass $cm, int $now): void {
+    protected function process(\stdClass $findatime, \stdClass $cm): void {
         $access = new access($findatime, $cm);
         $slots = new slots($findatime);
         foreach (array_keys($access->all_groups()) as $groupid) {
@@ -79,12 +82,10 @@ class auto_confirm extends \core\task\scheduled_task {
                 continue;
             }
             $members = $access->members($groupid);
-            $overlap = new overlap(
-                $slots,
-                array_keys($members),
-                availability::get_statuses($findatime->id, array_keys($members))
-            );
-            $best = $overlap->best((int)$findatime->duration, $now);
+            $overlap = overlap::for_instance($findatime, array_keys($members), $slots);
+            // Choose among starts at least a minute away, so the choice cannot turn into the past
+            // before it is confirmed when the task runs slowly over many activities.
+            $best = $overlap->best((int)$findatime->duration, time() + MINSECS);
             if (!$best) {
                 mtrace("  findatime {$findatime->id}, group {$groupid}: nobody available, skipped");
                 continue;

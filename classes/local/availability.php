@@ -101,6 +101,25 @@ class availability {
     }
 
     /**
+     * The statuses that count under the activity's current settings.
+     *
+     * When "if need be" answers were allowed and later switched off, stored "if need be" marks
+     * count as unavailable (and the grid shows them so), rather than blocking every later save.
+     *
+     * @param \stdClass $findatime Instance record.
+     * @param array $statuses slotstart => status.
+     * @return array slotstart => status.
+     */
+    public static function effective(\stdClass $findatime, array $statuses): array {
+        if (!empty($findatime->allowifneedbe)) {
+            return $statuses;
+        }
+        return array_filter($statuses, function (int $status): bool {
+            return $status === slots::STATUS_AVAILABLE;
+        });
+    }
+
+    /**
      * Replace a user's availability with a new set.
      *
      * Every slot start is checked against the activity's slot set and every status against
