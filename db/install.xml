@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/findatime/db" VERSION="20260928" COMMENT="XMLDB file for Moodle mod_findatime"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="findatime" COMMENT="Find a time activity instances">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timezone" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="IANA timezone the date range and daily window are defined in"/>
+        <FIELD NAME="datestart" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Midnight of the first day, in the activity timezone"/>
+        <FIELD NAME="dateend" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Midnight of the last day (inclusive), in the activity timezone"/>
+        <FIELD NAME="daystartmins" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="540" SEQUENCE="false" COMMENT="Start of the daily window, minutes after local midnight"/>
+        <FIELD NAME="dayendmins" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1020" SEQUENCE="false" COMMENT="End of the daily window, minutes after local midnight"/>
+        <FIELD NAME="slotsize" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="30" SEQUENCE="false" COMMENT="Slot length in minutes"/>
+        <FIELD NAME="duration" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="60" SEQUENCE="false" COMMENT="Meeting length in minutes"/>
+        <FIELD NAME="allowifneedbe" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="memberconfirm" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Any group member may confirm for their own group"/>
+        <FIELD NAME="autoconfirm" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="When to confirm the most popular slot automatically, 0 = never"/>
+        <FIELD NAME="autoconfirmdone" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="completionsubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="autoconfirm" UNIQUE="false" FIELDS="autoconfirmdone, autoconfirm"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="findatime_responses" COMMENT="One row per user who has submitted availability">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="findatimeid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="findatimeid" TYPE="foreign" FIELDS="findatimeid" REFTABLE="findatime" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="findatimeid-userid" UNIQUE="true" FIELDS="findatimeid, userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="findatime_slots" COMMENT="A user's non-default status for one slot (no row = unavailable)">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="responseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="slotstart" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="UTC timestamp of the slot start"/>
+        <FIELD NAME="status" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1 = available, 2 = if need be"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="responseid" TYPE="foreign" FIELDS="responseid" REFTABLE="findatime_responses" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="responseid-slotstart" UNIQUE="true" FIELDS="responseid, slotstart"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="findatime_meetings" COMMENT="Confirmed (or cancelled) meetings, per group">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="findatimeid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 when the activity is not in a group mode"/>
+        <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="UTC timestamp"/>
+        <FIELD NAME="duration" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false" COMMENT="Minutes"/>
+        <FIELD NAME="location" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Free-text location or URL"/>
+        <FIELD NAME="status" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1 = confirmed, 2 = cancelled"/>
+        <FIELD NAME="source" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1 = confirmed by a person, 2 = auto-confirmed"/>
+        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Calendar event derived from this meeting"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Who last confirmed or cancelled; 0 = the system"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="findatimeid" TYPE="foreign" FIELDS="findatimeid" REFTABLE="findatime" REFFIELDS="id"/>
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="findatimeid-groupid" UNIQUE="false" FIELDS="findatimeid, groupid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
