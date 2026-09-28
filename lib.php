@@ -274,3 +274,59 @@ function mod_findatime_core_calendar_provide_event_action(
         $event->timestart > time()
     );
 }
+
+/**
+ * Course reset form elements.
+ *
+ * @param MoodleQuickForm $mform The reset form.
+ */
+function findatime_reset_course_form_definition(&$mform) {
+    $mform->addElement('header', 'findatimeheader', get_string('modulenameplural', 'findatime'));
+    $mform->addElement('advcheckbox', 'reset_findatime_responses', get_string('resetresponses', 'findatime'));
+    $mform->addElement('advcheckbox', 'reset_findatime_meetings', get_string('resetmeetings', 'findatime'));
+}
+
+/**
+ * Course reset form defaults.
+ *
+ * @param stdClass $course The course.
+ * @return array
+ */
+function findatime_reset_course_form_defaults($course) {
+    return ['reset_findatime_responses' => 1, 'reset_findatime_meetings' => 1];
+}
+
+/**
+ * Reset user data and shift dates of all instances in a course.
+ *
+ * @param stdClass $data Reset form data.
+ * @return array Status items.
+ */
+function findatime_reset_userdata($data) {
+    global $DB;
+    $componentstr = get_string('modulenameplural', 'findatime');
+    $status = [];
+    $instances = $DB->get_records('findatime', ['course' => $data->courseid]);
+
+    if (!empty($data->reset_findatime_responses)) {
+        foreach ($instances as $findatime) {
+            \mod_findatime\local\availability::delete_for_instance($findatime->id);
+        }
+        $status[] = ['component' => $componentstr, 'item' => get_string('resetresponses', 'findatime'), 'error' => false];
+    }
+    if (!empty($data->reset_findatime_meetings)) {
+        foreach ($instances as $findatime) {
+            $DB->delete_records('findatime_meetings', ['findatimeid' => $findatime->id]);
+            $DB->delete_records('event', ['modulename' => 'findatime', 'instance' => $findatime->id,
+                'eventtype' => \mod_findatime\local\calendar_sync::EVENTTYPE_MEETING]);
+            $DB->set_field('findatime', 'autoconfirmdone', 0, ['id' => $findatime->id]);
+        }
+        $status[] = ['component' => $componentstr, 'item' => get_string('resetmeetings', 'findatime'), 'error' => false];
+    }
+    if (!empty($data->timeshift)) {
+        shift_course_mod_dates('findatime', ['datestart', 'dateend', 'autoconfirm'], $data->timeshift, $data->courseid);
+        $status[] = ['component' => $componentstr, 'item' => get_string('resetdatesshifted', 'findatime'), 'error' => false];
+    }
+    findatime_refresh_events($data->courseid);
+    return $status;
+}

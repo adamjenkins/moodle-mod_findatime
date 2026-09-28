@@ -107,8 +107,8 @@ class slots {
         if ($slotsize <= 0 || $dayendmins <= $daystartmins) {
             return [];
         }
-        $day = (new DateTimeImmutable('@' . $datestart))->setTimezone($tz)->setTime(0, 0);
-        $last = (new DateTimeImmutable('@' . $dateend))->setTimezone($tz)->format('Y-m-d');
+        $day = new DateTimeImmutable(self::civil_date_of_midnight($datestart, $tz) . ' 00:00:00', $tz);
+        $last = self::civil_date_of_midnight($dateend, $tz);
         $starts = [];
         for ($i = 0; $i <= self::MAX_DAYS && $day->format('Y-m-d') <= $last; $i++) {
             for ($m = $daystartmins; $m + $slotsize <= $dayendmins; $m += $slotsize) {
@@ -140,6 +140,36 @@ class slots {
     }
 
     /**
+     * The civil date a stored "midnight" stands for.
+     *
+     * Dates are stored as local midnights, but code that moves them by whole days of seconds
+     * (course reset, restore with a new start date) lands an hour early or late when a DST change
+     * lies in between. Reading the date at midday absorbs any such drift of up to 12 hours.
+     *
+     * @param int $timestamp A local midnight, possibly drifted by a DST change.
+     * @param DateTimeZone $tz Timezone.
+     * @return string Y-m-d
+     */
+    public static function civil_date_of_midnight(int $timestamp, DateTimeZone $tz): string {
+        return self::civil_date($timestamp + 12 * HOURSECS, $tz);
+    }
+
+    /**
+     * Move an instant by whole days of wall-clock time in a timezone (09:00 stays 09:00 across DST).
+     *
+     * @param int $timestamp Timestamp.
+     * @param int $days Days to move (may be negative).
+     * @param DateTimeZone $tz Timezone.
+     * @return int
+     */
+    public static function shift_civil_days(int $timestamp, int $days, DateTimeZone $tz): int {
+        if ($days === 0) {
+            return $timestamp;
+        }
+        return (new DateTimeImmutable('@' . $timestamp))->setTimezone($tz)->modify(sprintf('%+d days', $days))->getTimestamp();
+    }
+
+    /**
      * The timestamp of the start of a civil date in a timezone.
      *
      * @param string $ymd Date as Y-m-d.
@@ -162,7 +192,7 @@ class slots {
      * @return int
      */
     public static function convert_civil_midnight(int $timestamp, DateTimeZone $from, DateTimeZone $to): int {
-        return self::civil_midnight(self::civil_date($timestamp, $from), $to);
+        return self::civil_midnight(self::civil_date_of_midnight($timestamp, $from), $to);
     }
 
     /**

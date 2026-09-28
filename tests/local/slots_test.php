@@ -157,6 +157,34 @@ final class slots_test extends \basic_testcase {
     }
 
     /**
+     * A stored midnight moved by whole days of seconds across a DST change still means its date.
+     */
+    public function test_midnight_drift_across_dst(): void {
+        $london = new DateTimeZone('Europe/London');
+        $midnight = slots::civil_midnight('2026-10-20', $london);
+        // 14 x 86400 s later is 23:00 on 2 November in London, because BST ended in between.
+        $drifted = $midnight + 14 * DAYSECS;
+        $this->assertSame('2026-11-02', slots::civil_date($drifted, $london));
+        $this->assertSame('2026-11-03', slots::civil_date_of_midnight($drifted, $london));
+
+        $record = $this->make('Europe/London', '2026-10-20', '2026-10-20', 540, 600, 60);
+        $record->datestart += 14 * DAYSECS;
+        $record->dateend += 14 * DAYSECS;
+        $this->assertSame([gmmktime(9, 0, 0, 11, 3, 2026)], (new slots($record))->get_starts());
+    }
+
+    /**
+     * Moving by whole days keeps the wall-clock time across a DST change.
+     */
+    public function test_shift_civil_days(): void {
+        $london = new DateTimeZone('Europe/London');
+        // 09:00 BST on 20 October is 08:00 UTC; 14 days later 09:00 GMT is 09:00 UTC.
+        $this->assertSame(gmmktime(9, 0, 0, 11, 3, 2026), slots::shift_civil_days(gmmktime(8, 0, 0, 10, 20, 2026), 14, $london));
+        $this->assertSame(gmmktime(8, 0, 0, 10, 20, 2026), slots::shift_civil_days(gmmktime(9, 0, 0, 11, 3, 2026), -14, $london));
+        $this->assertSame(12345, slots::shift_civil_days(12345, 0, $london));
+    }
+
+    /**
      * A bad stored timezone falls back to a valid zone instead of failing.
      */
     public function test_timezone_fallback(): void {
