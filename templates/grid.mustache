@@ -1,0 +1,126 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_findatime/grid
+
+    The current user's editable availability grid.
+
+    Classes required for JS:
+    * mod-findatime-cell, mod-findatime-brush
+
+    Data attributes required for JS:
+    * data-region="mod-findatime-grid", data-cmid, data-slot, data-status, data-row, data-col,
+      data-label, data-action, data-brush
+
+    Context variables required for this template:
+    * uniqid - Unique id of the grid container.
+    * cmid - Course module id.
+    * days - Column headings: key, label (full date), weekday, date.
+    * rows - Rows: key, label, hourstart, cells (isslot, slotstart, label, status, statuslabel, row, col).
+    * hasslots - Whether there are any slots.
+    * allowifneedbe - Whether "if need be" can be chosen.
+    * lastsaved - When the availability was last saved, or empty.
+
+    Example context (json):
+    {
+        "uniqid": "mod-findatime-grid-1",
+        "cmid": 12,
+        "days": [{"key": "2026-10-05", "label": "Monday, 5 October 2026", "weekday": "Mon", "date": "05 Oct"}],
+        "rows": [
+            {"key": "540:0", "label": "09:00", "hourstart": false, "cells": [
+                {"isslot": true, "slotstart": 1791190800, "label": "Monday, 5 October 2026, 9:00 AM",
+                 "status": 1, "statuslabel": "Available", "row": 0, "col": 0}
+            ]},
+            {"key": "570:0", "label": "09:30", "hourstart": false, "cells": [
+                {"isslot": false, "row": 1, "col": 0}
+            ]}
+        ],
+        "hasslots": true,
+        "allowifneedbe": true,
+        "lastsaved": ""
+    }
+}}
+<div id="{{uniqid}}" class="mod-findatime-grid" data-region="mod-findatime-grid" data-cmid="{{cmid}}">
+    {{#hasslots}}
+    <div class="mod-findatime-toolbar d-flex flex-wrap align-items-center mb-2">
+        <div class="btn-group mb-1 mod-findatime-brushes" role="group" aria-label="{{#str}}brush, mod_findatime{{/str}}">
+            <button type="button" class="btn btn-outline-secondary mod-findatime-brush" data-brush="1" aria-pressed="true">
+                <span class="mod-findatime-swatch" data-status="1" aria-hidden="true"></span>
+                {{#str}}statusavailable, mod_findatime{{/str}}
+            </button>
+            {{#allowifneedbe}}
+            <button type="button" class="btn btn-outline-secondary mod-findatime-brush" data-brush="2" aria-pressed="false">
+                <span class="mod-findatime-swatch" data-status="2" aria-hidden="true"></span>
+                {{#str}}statusifneedbe, mod_findatime{{/str}}
+            </button>
+            {{/allowifneedbe}}
+            <button type="button" class="btn btn-outline-secondary mod-findatime-brush" data-brush="0" aria-pressed="false">
+                <span class="mod-findatime-swatch" data-status="0" aria-hidden="true"></span>
+                {{#str}}statusunavailable, mod_findatime{{/str}}
+            </button>
+        </div>
+        <button type="button" class="btn btn-outline-secondary mb-1 mod-findatime-painttoggle" data-action="togglepaint"
+            aria-pressed="false" hidden>
+            {{#str}}paintmode, mod_findatime{{/str}}
+        </button>
+        <button type="button" class="btn btn-primary mb-1" data-action="save">{{#str}}saveavailability, mod_findatime{{/str}}</button>
+        <span class="mod-findatime-savestatus mb-1" data-region="savestatus" role="status" aria-live="polite">{{#lastsaved}}{{#str}}lastsaved, mod_findatime, {{lastsaved}}{{/str}}{{/lastsaved}}</span>
+    </div>
+    <p class="mod-findatime-help" id="{{uniqid}}-help">{{#str}}gridhelp, mod_findatime{{/str}}</p>
+    <noscript><div class="alert alert-warning">{{#str}}needsjs, mod_findatime{{/str}}</div></noscript>
+    <div class="mod-findatime-scroll">
+        <table class="mod-findatime-table" role="grid" aria-label="{{#str}}youravailability, mod_findatime{{/str}}"
+            aria-describedby="{{uniqid}}-help">
+            <thead>
+                <tr>
+                    <th scope="col"><span class="mod-findatime-sr">{{#str}}time, mod_findatime{{/str}}</span></th>
+                    {{#days}}
+                    <th scope="col" class="mod-findatime-day" aria-label="{{label}}">
+                        <span aria-hidden="true">{{weekday}}<br>{{date}}</span>
+                    </th>
+                    {{/days}}
+                </tr>
+            </thead>
+            <tbody>
+                {{#rows}}
+                <tr{{#hourstart}} class="mod-findatime-hour"{{/hourstart}}>
+                    <th scope="row" class="mod-findatime-time">{{label}}</th>
+                    {{#cells}}
+                    {{#isslot}}
+                    <td role="gridcell" class="mod-findatime-cell" tabindex="-1" data-slot="{{slotstart}}"
+                        data-status="{{status}}" data-row="{{row}}" data-col="{{col}}" data-label="{{label}}"
+                        aria-label="{{label}}: {{statuslabel}}"></td>
+                    {{/isslot}}
+                    {{^isslot}}
+                    <td class="mod-findatime-noslot"></td>
+                    {{/isslot}}
+                    {{/cells}}
+                </tr>
+                {{/rows}}
+            </tbody>
+        </table>
+    </div>
+    {{/hasslots}}
+    {{^hasslots}}
+    <div class="alert alert-info">{{#str}}noslots, mod_findatime{{/str}}</div>
+    {{/hasslots}}
+</div>
+{{#js}}
+require(['mod_findatime/grid'], function(grid) {
+    grid.init('{{uniqid}}');
+});
+{{/js}}

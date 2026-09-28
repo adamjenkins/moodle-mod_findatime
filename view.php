@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Find a time activity page.
+ * Find a time activity page: the user's availability grid, the group overlap and the meeting.
  *
  * @package    mod_findatime
  * @copyright  2026 Adam Jenkins <adam@wisecat.net>
@@ -33,14 +33,27 @@ require_login($course, true, $cm);
 $context = context_module::instance($cm->id);
 require_capability('mod/findatime:view', $context);
 
-findatime_view($findatime, $course, $cm, $context);
-
 $PAGE->set_url('/mod/findatime/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($findatime->name));
 $PAGE->set_heading(format_string($course->fullname));
 
-$slots = new \mod_findatime\local\slots($findatime);
+findatime_view($findatime, $course, $cm, $context);
+
+$access = new \mod_findatime\local\access($findatime, $cm, $context);
 
 echo $OUTPUT->header();
-echo html_writer::tag('p', s($slots->count() . ' slots, ' . $findatime->timezone));
+
+echo html_writer::tag('p', s(\mod_findatime\output\helper::timezone_notice($findatime)), ['class' => 'mod-findatime-tznotice']);
+
+// Teachers and other non-respondents only see the group overlap.
+if (has_capability('mod/findatime:respond', $context)) {
+    echo $OUTPUT->heading(get_string('youravailability', 'findatime'), 3);
+    if ($access->can_respond($USER->id)) {
+        $grid = new \mod_findatime\output\grid($findatime, $cm, $USER->id);
+        echo $OUTPUT->render_from_template('mod_findatime/grid', $grid->export_for_template($OUTPUT));
+    } else {
+        echo $OUTPUT->notification(get_string('errornogroup', 'findatime'), \core\output\notification::NOTIFY_INFO);
+    }
+}
+
 echo $OUTPUT->footer();

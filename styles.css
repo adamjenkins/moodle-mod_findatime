@@ -1,0 +1,127 @@
+.path-mod-findatime .mod-findatime-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.path-mod-findatime .mod-findatime-toolbar {
+    gap: 0.5rem;
+}
+
+.path-mod-findatime .mod-findatime-savestatus {
+    color: #495057;
+    font-size: 0.875rem;
+}
+
+.path-mod-findatime .mod-findatime-scroll {
+    max-width: 100%;
+    max-height: 70vh;
+    overflow: auto;
+    margin-bottom: 1rem;
+}
+
+.path-mod-findatime .mod-findatime-table {
+    border-collapse: separate;
+    border-spacing: 2px;
+    user-select: none;
+}
+
+.path-mod-findatime .mod-findatime-table th {
+    padding: 0 0.35rem;
+    font-size: 0.8rem;
+    font-weight: normal;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.path-mod-findatime .mod-findatime-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #fff;
+}
+
+.path-mod-findatime .mod-findatime-table th.mod-findatime-time {
+    position: sticky;
+    left: 0;
+    background-color: #fff;
+    text-align: right;
+}
+
+.path-mod-findatime .mod-findatime-hour th,
+.path-mod-findatime .mod-findatime-hour td {
+    border-top-width: 3px;
+}
+
+.path-mod-findatime .mod-findatime-painting {
+    touch-action: none;
+}
+
+/* Editable cells and status swatches. */
+.path-mod-findatime .mod-findatime-cell,
+.path-mod-findatime .mod-findatime-swatch {
+    border: 1px solid #adb5bd;
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+.path-mod-findatime .mod-findatime-cell {
+    min-width: 3rem;
+    height: 1.75rem;
+    font-size: 0.85rem;
+    line-height: 1;
+    text-align: center;
+    cursor: pointer;
+}
+
+.path-mod-findatime .mod-findatime-swatch {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.25rem;
+    vertical-align: text-bottom;
+}
+
+.path-mod-findatime .mod-findatime-cell[data-status="1"],
+.path-mod-findatime .mod-findatime-swatch[data-status="1"] {
+    border-color: #0f5132;
+    background-color: #198754;
+    color: #fff;
+}
+
+.path-mod-findatime .mod-findatime-cell[data-status="2"],
+.path-mod-findatime .mod-findatime-swatch[data-status="2"] {
+    border-color: #997404;
+    background-color: #ffe69c;
+    color: #212529;
+}
+
+/* A symbol as well as a colour, so the status never depends on colour alone. */
+.path-mod-findatime .mod-findatime-cell[data-status="1"]::after {
+    content: "\2713";
+}
+
+.path-mod-findatime .mod-findatime-cell[data-status="2"]::after {
+    content: "?";
+}
+
+.path-mod-findatime .mod-findatime-cell:focus,
+.path-mod-findatime .mod-findatime-heat:focus {
+    outline: 3px solid #0d6efd;
+    outline-offset: 1px;
+}
+
+.path-mod-findatime .mod-findatime-table th,
+.path-mod-findatime .mod-findatime-noslot {
+    border: 0;
+}
+
+.path-mod-findatime .mod-findatime-noslot {
+    background-color: transparent;
+}

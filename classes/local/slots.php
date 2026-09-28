@@ -243,10 +243,11 @@ class slots {
      *
      * @param DateTimeZone $viewertz The viewer's timezone.
      * @param callable|null $cellcallback Optional function(int $slotstart): array adding data to each cell.
-     * @return array With 'days' (list of ['key', 'label']) and 'rows' (list of ['key', 'label', 'cells']).
+     * @return array With 'days' (list of key, label, weekday, date) and 'rows' (list of key, label, cells).
      */
     public function layout(DateTimeZone $viewertz, ?callable $cellcallback = null): array {
         $dayformat = get_string('strftimedaydate', 'langconfig');
+        $shortdateformat = get_string('strftimedateshortmonthabbr', 'langconfig');
         $timeformat = get_string('strftimetime', 'langconfig');
         $fullformat = get_string('strftimedaydatetime', 'langconfig');
         $tzname = $viewertz->getName();
@@ -259,7 +260,11 @@ class slots {
             $daykey = $local->format('Y-m-d');
             $minutes = (int)$local->format('G') * 60 + (int)$local->format('i');
             if (!isset($days[$daykey])) {
-                $days[$daykey] = userdate($start, $dayformat, $tzname);
+                $days[$daykey] = [
+                    'label' => userdate($start, $dayformat, $tzname),
+                    'weekday' => userdate($start, '%a', $tzname),
+                    'date' => userdate($start, $shortdateformat, $tzname),
+                ];
             }
             $occurrence = 0;
             while (isset($matrix[$minutes . ':' . $occurrence][$daykey])) {
@@ -289,8 +294,8 @@ class slots {
         });
 
         $outdays = [];
-        foreach ($days as $key => $label) {
-            $outdays[] = ['key' => $key, 'label' => $label];
+        foreach ($days as $key => $day) {
+            $outdays[] = ['key' => $key] + $day;
         }
         $outrows = [];
         $rowindex = 0;
