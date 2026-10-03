@@ -1,0 +1,23 @@
+# camp listing manifest — descriptive content for your plugin's page.
+# Edit freely and commit; camp ingests this file at each tagged release.
+# Schema: https://camp-registry.org/schema/listing.schema.json
+name: mod_findatime
+summary: 'A Moodle activity where group members mark their availability on a time grid, see where it overlaps, and confirm a meeting time.'
+description: |
+  Each member of a course group marks when they are available, if need be,
+  or unavailable on a time grid shown in their own timezone. A heatmap shows
+  the group's overlap and the best meeting times. A teacher, or any member if
+  allowed, confirms a time; this creates a group calendar event and notifies
+  the members, and unconfirmed groups can be confirmed automatically at a set
+  time. For teachers coordinating group projects, tutorials or study groups.
+labels:
+  # Required disclosure labels — pick all that apply (RFC §4.7):
+  #   fully-free | freemium | paid-service | external-account
+  #   donation-supported | commercial-support-available
+  - fully-free
+# screenshots:
+#   - path: .camp/screenshots/overview.png
+#     caption: Main view
+links:
+  docs: https://github.com/adamjenkins/moodle-mod_findatime#readme
+  issues: https://github.com/adamjenkins/moodle-mod_findatime/issues
