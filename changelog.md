@@ -3,6 +3,11 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.1] - 2026-10-04
+
+### Added
+- Tagged releases are published to the camp plugin registry.
+
 ## [0.1.0] - 2026-09-28
 
 ### Added
