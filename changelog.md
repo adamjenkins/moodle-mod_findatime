@@ -3,6 +3,16 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.2] - 2026-10-04
+
+### Added
+- The GPL-3.0 licence text (`LICENSE`) at the repository root.
+
+### Changed
+- Maturity raised from `MATURITY_ALPHA` to `MATURITY_BETA`.
+- CI: the non-blocking moodle.git `main` jobs become blocking `MOODLE_503_STABLE` jobs now that Moodle 5.3 is released.
+- Composer: the `moodle/moodle` constraint is `^4.5 || ^5.0` (was `>=4.5 <5.4`), so new 5.x releases are not excluded.
+
 ## [0.1.1] - 2026-10-04
 
 ### Added

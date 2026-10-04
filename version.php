@@ -25,9 +25,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_findatime';
-$plugin->version = 2026100400;
-$plugin->release = '0.1.1';
-$plugin->maturity = MATURITY_ALPHA;
+$plugin->version = 2026100401;
+$plugin->release = '0.1.2';
+$plugin->maturity = MATURITY_BETA;
 // Moodle 4.5 LTS.
 $plugin->requires = 2024100700;
 $plugin->supported = [405, 503];
