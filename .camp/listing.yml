@@ -15,9 +15,23 @@ labels:
   #   fully-free | freemium | paid-service | external-account
   #   donation-supported | commercial-support-available
   - fully-free
-# screenshots:
-#   - path: .camp/screenshots/overview.png
-#     caption: Main view
+screenshots:
+  - path: .camp/screenshots/01-mark-availability.png
+    caption: 'A student marks her availability for the week: Available (green ✓) and If need be (yellow ?), saved automatically.'
+  - path: .camp/screenshots/02-group-overlap.png
+    caption: 'The group overlap heatmap for Team Aurora, with the names of who is free at the pointed time and the best meeting times. "4 of 5 have answered", with who has not.'
+  - path: .camp/screenshots/03-teacher-best-times.png
+    caption: 'The teacher''s view of a group: the same heatmap with a "Confirm this time" button on each of the best times.'
+  - path: .camp/screenshots/04-confirm-time.png
+    caption: Confirming a time, with an optional location or online meeting link.
+  - path: .camp/screenshots/05-confirmed-meeting.png
+    caption: A student of Team Borealis sees the confirmed meeting, its location, who confirmed it, and a link to the calendar.
+  - path: .camp/screenshots/06-teacher-overview.png
+    caption: 'The overview of all groups: response rate, confirmed meeting and location for each team.'
+  - path: .camp/screenshots/07-calendar.png
+    caption: 'The confirmed meeting in a group member''s calendar, next to the "Mark your availability" deadline.'
+  - path: .camp/screenshots/08-activity-settings.png
+    caption: 'Activity settings: timezone, date range, daily window, slot size and meeting length, with a warning once people have answered.'
 links:
   docs: https://github.com/adamjenkins/moodle-mod_findatime#readme
   issues: https://github.com/adamjenkins/moodle-mod_findatime/issues
