@@ -21,8 +21,8 @@ the group's shared availability decides the time.
   enabled, confirms a time and an optional location or link. This creates a group calendar event and
   sends a notification to the group's members. The meeting can be moved or cancelled; the calendar
   event follows.
-- **Colour-coded overlap map**: from red (nobody can come) through orange and yellow to green
-  (everybody), with a colour key. Each block shows its start and end time as a tooltip; clicking a
+- **Colour-coded overlap map**: from red (nobody can come) through orange and yellow to green,
+  and blue only when everybody is available, with a colour key. Each block shows its start and end time as a tooltip; clicking a
   block keeps its details shown (click it again to release, or another block to move).
 - **Necessary participants**: the meeting time must suit them. Once they have answered, the times they
   cannot make are left out of the best times and are never chosen automatically; optionally they are

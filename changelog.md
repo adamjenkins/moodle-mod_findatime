@@ -3,6 +3,12 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Changed
+- On the overlap map, times when every member is available (not "if need be") are blue instead of dark green, so
+  they stand out from the greens.
+
 ## [0.2.0] - 2026-10-24
 
 ### Added

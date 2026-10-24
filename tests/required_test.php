@@ -96,7 +96,7 @@ final class required_test extends \advanced_testcase {
     }
 
     /**
-     * Colour levels: neutral before any answer, red for nobody, green for everybody, quarters between.
+     * Colour levels: neutral before any answer, red for nobody, blue for everybody, quarters between.
      */
     public function test_levels(): void {
         $this->assertSame(0, heatmap::level(0, 0, 4, 0));
@@ -104,7 +104,8 @@ final class required_test extends \advanced_testcase {
         $this->assertSame(2, heatmap::level(0, 1, 4, 2), 'one "if need be" of four is an eighth');
         $this->assertSame(3, heatmap::level(1, 0, 4, 2));
         $this->assertSame(4, heatmap::level(2, 0, 4, 2));
-        $this->assertSame(5, heatmap::level(3, 1, 4, 4));
+        $this->assertSame(5, heatmap::level(3, 1, 4, 4), 'blue needs everybody, not three plus one "if need be"');
+        $this->assertSame(4, heatmap::level(0, 4, 4, 4), 'everybody "if need be" is half, not blue');
         $this->assertSame(6, heatmap::level(4, 0, 4, 4));
         $this->assertCount(heatmap::LEVELS, heatmap::legend());
     }

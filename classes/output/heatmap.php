@@ -35,7 +35,7 @@ use renderer_base;
 class heatmap implements \renderable, \templatable {
     /** @var int Number of best meeting times listed. */
     public const CANDIDATES = 5;
-    /** @var int Colour levels once anybody has answered: 1 = nobody available (red) to 6 = everybody (green). */
+    /** @var int Colour levels once anybody has answered: 1 = nobody available (red) to 6 = everybody (blue). */
     public const LEVELS = 6;
 
     /** @var access Access rules. */
@@ -137,7 +137,7 @@ class heatmap implements \renderable, \templatable {
 
     /**
      * Heat level of a slot: 0 while nobody has answered; then 1 when nobody can come (red), LEVELS when
-     * everybody is available (dark green), and 2-5 for the quarters in between, by the share of members
+     * everybody is available (blue), and 2-5 for the quarters in between, by the share of members
      * available with "if need be" counting half.
      *
      * @param int $available Members available.

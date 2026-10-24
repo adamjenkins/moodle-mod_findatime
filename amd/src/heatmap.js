@@ -32,7 +32,7 @@ const LEVELS = 6;
 
 /**
  * Heat level, the same formula as \mod_findatime\output\heatmap::level(): 0 while nobody has
- * answered, then 1 (nobody available, red) to LEVELS (everybody available, dark green).
+ * answered, then 1 (nobody available, red) to LEVELS (everybody available, blue).
  *
  * @param {number} available Members available.
  * @param {number} ifneedbe Members available if need be.

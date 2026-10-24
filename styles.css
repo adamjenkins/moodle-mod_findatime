@@ -154,7 +154,7 @@
     text-align: center;
 }
 
-/* Heat colours, red (nobody can come) through orange, yellow and green to dark green (everybody);
+/* Heat colours, red (nobody can come) through orange, yellow and green, then blue only when everybody is available;
    each pairs with a text colour of at least 4.5:1 contrast, and the count is always printed too. */
 .path-mod-findatime .mod-findatime-heat[data-level="1"],
 .path-mod-findatime .mod-findatime-heatswatch[data-level="1"] {
@@ -193,8 +193,8 @@
 
 .path-mod-findatime .mod-findatime-heat[data-level="6"],
 .path-mod-findatime .mod-findatime-heatswatch[data-level="6"] {
-    border-color: #0d3310;
-    background-color: #1b5e20;
+    border-color: #0b3d78;
+    background-color: #1565c0;
     color: #fff;
 }
 
