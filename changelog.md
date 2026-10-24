@@ -3,7 +3,7 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [0.2.0] - 2026-10-24
 
 ### Added
 - "Respond by" (RSVP) date: after it availability is read-only and only the answers given by then count.
@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 - The overlap map is colour-coded from red (nobody) to dark green (everybody), with a colour key.
+- Neutral and feedback colours come from the Moodle Design System tokens (falling back to the Bootstrap variables),
+  so the styles follow Moodle 5.3's dark colour mode.
+- The activity icon (`pix/monologo.svg`) is redrawn as a 24x24 line icon.
+- The camp listing has new screenshots, summary and description.
 
 ## [0.1.3] - 2026-10-04
 
