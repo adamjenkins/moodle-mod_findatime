@@ -20,7 +20,8 @@
     The meeting of one group.
 
     Data attributes required for JS:
-    * data-region="mod-findatime-meeting", data-cmid, data-groupid, data-action="confirm", data-action="cancel"
+    * data-region="mod-findatime-meeting", data-cmid, data-groupid, data-action="confirm", data-action="cancel",
+      data-action="senddetails"
 
     Context variables required for this template:
     * cmid, groupid - Course module and group.
@@ -67,6 +68,7 @@
             {{#confirmed}}{{#str}}changetime, mod_findatime{{/str}}{{/confirmed}}{{^confirmed}}{{#str}}confirmatime, mod_findatime{{/str}}{{/confirmed}}
         </button>
         {{#confirmed}}
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="senddetails" data-groupid="{{groupid}}">{{#str}}senddetails, mod_findatime{{/str}}</button>
         <button type="button" class="btn btn-outline-danger btn-sm" data-action="cancel" data-groupid="{{groupid}}">{{#str}}cancelmeeting, mod_findatime{{/str}}</button>
         {{/confirmed}}
         {{/canconfirm}}

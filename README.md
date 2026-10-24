@@ -21,6 +21,13 @@ the group's shared availability decides the time.
   enabled, confirms a time and an optional location or link. This creates a group calendar event and
   sends a notification to the group's members. The meeting can be moved or cancelled; the calendar
   event follows.
+- **RSVP date and reminders**: optionally, members must answer by a "Respond by" date. After it the
+  grid is read-only and only the answers given by then count when the time is set, by hand or
+  automatically. Reminders can be sent 1 hour, 1, 2 or 3 days or a week before it to the members who
+  have not answered (one reminder if several of these times have already passed).
+- **Meeting details**: confirming can notify the group (optionally with a message), and "Send meeting
+  details" sends the time, length, location and a note to the group again, at most once every
+  10 minutes.
 - **Automatic confirmation**: optionally, at a chosen time, every group that has no meeting yet gets
   its most popular time confirmed. A meeting that someone confirmed or cancelled by hand is never
   changed.
@@ -59,6 +66,8 @@ Copy the plugin to `mod/findatime` (on Moodle 5.1 and later: `public/mod/findati
 | Meeting length | A whole number of slots |
 | Allow "if need be" answers | Offer the third status |
 | Any group member may confirm | Let members confirm or cancel for their own group |
+| Respond by | Answers are final at this time; it is also the due date shown in the timeline |
+| Reminders | When to remind members who have not answered, before the RSVP date |
 | Confirm automatically at | When to confirm the most popular time for groups without a meeting |
 
 A grid may hold at most 2000 slots. Changing the timing after people have answered is allowed; answers
@@ -80,6 +89,8 @@ can access all groups. To designate a student as a group's coordinator, override
 
 ## Good to know
 
+- Deleting the activity keeps the calendar entries of meetings that have already taken place: they
+  become ordinary group (or course) events. Entries of upcoming meetings are deleted with it.
 - A confirmed meeting is a group calendar event, so it appears in the calendars of that group's
   members. Moodle does not show another group's module events to a teacher who is not in any group of
   the course, so teachers follow the meetings on the activity's overview page.

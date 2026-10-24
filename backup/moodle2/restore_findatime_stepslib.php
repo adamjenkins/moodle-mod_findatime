@@ -80,6 +80,12 @@ class restore_findatime_activity_structure_step extends restore_activity_structu
             $data->$field = \mod_findatime\local\slots::shift_civil_days($midnight, $this->shiftdays, $this->reftz);
         }
         $data->autoconfirm = empty($data->autoconfirm) ? 0 : $this->shift((int)$data->autoconfirm);
+        // Backups made before the RSVP date existed have none of these fields.
+        $data->rsvpby = empty($data->rsvpby) ? 0 : $this->shift((int)$data->rsvpby);
+        $data->reminders = \mod_findatime\local\reminders::format(explode(',', (string)($data->reminders ?? '')));
+        // Reminders still ahead are sent for the restored copy too.
+        $data->reminderssent = ($data->rsvpby > time()) ? ''
+            : \mod_findatime\local\reminders::format(explode(',', (string)($data->reminderssent ?? '')));
         // A backup is untrusted input: the same rules as the settings form.
         \mod_findatime\local\slots::normalise_settings($data);
         $data->allowifneedbe = empty($data->allowifneedbe) ? 0 : 1;
@@ -162,6 +168,7 @@ class restore_findatime_activity_structure_step extends restore_activity_structu
         $data->duration = max(1, (int)$data->duration);
         $data->location = clean_param((string)$data->location, PARAM_TEXT);
         $data->eventid = null;
+        $data->timenotified = (int)($data->timenotified ?? 0);
         // One meeting per group, as the plugin itself keeps it.
         if ($DB->record_exists('findatime_meetings', ['findatimeid' => $data->findatimeid, 'groupid' => $data->groupid])) {
             return;

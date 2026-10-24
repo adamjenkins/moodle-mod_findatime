@@ -3,6 +3,14 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+- "Respond by" (RSVP) date: after it availability is read-only and only the answers given by then count.
+- Reminders before the RSVP date to members who have not answered.
+- An optional message and a "Notify group members" choice when confirming, and "Send meeting details".
+- Calendar entries of meetings that have taken place stay in the course calendar when the activity is deleted.
+
 ## [0.1.3] - 2026-10-04
 
 ### Changed

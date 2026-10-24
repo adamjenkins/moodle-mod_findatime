@@ -34,6 +34,8 @@
     * hasslots - Whether there are any slots.
     * allowifneedbe - Whether "if need be" can be chosen.
     * lastsaved - When the availability was last saved, or empty.
+    * open - Whether availability can still be marked (false after the RSVP date: read-only grid).
+    * rsvpby - The RSVP date, or empty.
 
     Example context (json):
     {
@@ -51,11 +53,16 @@
         ],
         "hasslots": true,
         "allowifneedbe": true,
-        "lastsaved": ""
+        "lastsaved": "",
+        "open": true,
+        "rsvpby": "Friday, 2 October 2026, 5:00 PM"
     }
 }}
-<div id="{{uniqid}}" class="mod-findatime-grid" data-region="mod-findatime-grid" data-cmid="{{cmid}}">
+<div id="{{uniqid}}" class="mod-findatime-grid{{^open}} mod-findatime-readonly{{/open}}" data-region="mod-findatime-grid"
+    data-cmid="{{cmid}}">
     {{#hasslots}}
+    {{#open}}
+    {{#rsvpby}}<p class="mod-findatime-rsvp"><strong>{{#str}}rsvpbynotice, mod_findatime, {{rsvpby}}{{/str}}</strong></p>{{/rsvpby}}
     <div class="mod-findatime-toolbar d-flex flex-wrap align-items-center mb-2">
         <div class="btn-group mb-1 mod-findatime-brushes" role="group" aria-label="{{#str}}brush, mod_findatime{{/str}}">
             <button type="button" class="btn btn-outline-secondary mod-findatime-brush" data-brush="1" aria-pressed="true">
@@ -81,6 +88,10 @@
         <span class="mod-findatime-savestatus mb-1" data-region="savestatus" role="status" aria-live="polite">{{#lastsaved}}{{#str}}lastsaved, mod_findatime, {{lastsaved}}{{/str}}{{/lastsaved}}</span>
     </div>
     <p class="mod-findatime-help" id="{{uniqid}}-help">{{#str}}gridhelp, mod_findatime{{/str}}</p>
+    {{/open}}
+    {{^open}}
+    <div class="alert alert-info" id="{{uniqid}}-help">{{#str}}rsvpclosednotice, mod_findatime, {{rsvpby}}{{/str}}</div>
+    {{/open}}
     <noscript><div class="alert alert-warning">{{#str}}needsjs, mod_findatime{{/str}}</div></noscript>
     <div class="mod-findatime-scroll">
         <table class="mod-findatime-table" role="grid" aria-label="{{#str}}youravailability, mod_findatime{{/str}}"
@@ -119,8 +130,10 @@
     <div class="alert alert-info">{{#str}}noslots, mod_findatime{{/str}}</div>
     {{/hasslots}}
 </div>
+{{#open}}
 {{#js}}
 require(['mod_findatime/grid'], function(grid) {
     grid.init('{{uniqid}}');
 });
 {{/js}}
+{{/open}}

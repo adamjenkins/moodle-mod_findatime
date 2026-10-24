@@ -93,6 +93,13 @@ function findatime_update_instance($data, $mform = null) {
         // A new deadline is a new decision: run the automatic confirmation again when it passes.
         $data->autoconfirmdone = 0;
     }
+    if (
+        (int)$old->rsvpby !== (int)($data->rsvpby ?? 0)
+        || (string)$old->reminders !== (string)($data->reminders ?? '')
+    ) {
+        // A new RSVP date or reminder choice is a new schedule: send its reminders afresh.
+        $data->reminderssent = '';
+    }
     $DB->update_record('findatime', $data);
 
     $findatime = $DB->get_record('findatime', ['id' => $data->id], '*', MUST_EXIST);
@@ -120,6 +127,9 @@ function findatime_delete_instance($id) {
         return false;
     }
     \mod_findatime\local\availability::delete_for_instance($findatime->id);
+    // Meetings that have taken place stay in the calendar as ordinary group or course events; core
+    // deletes the module's events only after this function returns.
+    \mod_findatime\local\calendar_sync::keep_past_meetings($findatime);
     $DB->delete_records('findatime_meetings', ['findatimeid' => $findatime->id]);
     $DB->delete_records('event', ['modulename' => 'findatime', 'instance' => $findatime->id]);
     $DB->delete_records('findatime', ['id' => $findatime->id]);
@@ -312,6 +322,8 @@ function findatime_reset_userdata($data) {
         foreach ($instances as $findatime) {
             \mod_findatime\local\availability::delete_for_instance($findatime->id);
         }
+        // Nobody has answered any more: the reminders apply again.
+        $DB->set_field('findatime', 'reminderssent', '', ['course' => $data->courseid]);
         $status[] = ['component' => $componentstr, 'item' => get_string('resetresponses', 'findatime'), 'error' => false];
     }
     if (!empty($data->reset_findatime_meetings)) {
@@ -359,6 +371,12 @@ function findatime_shift_instance(stdClass $findatime, int $days): void {
         $update->autoconfirm = $slots::shift_civil_days((int)$findatime->autoconfirm, $days, $tz);
         if ($update->autoconfirm > time()) {
             $update->autoconfirmdone = 0;
+        }
+    }
+    if (!empty($findatime->rsvpby)) {
+        $update->rsvpby = $slots::shift_civil_days((int)$findatime->rsvpby, $days, $tz);
+        if ($update->rsvpby > time()) {
+            $update->reminderssent = '';
         }
     }
     $DB->update_record('findatime', $update);

@@ -55,8 +55,8 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $course = $gen->create_course();
         $module = $gen->create_module('findatime', [
             'course' => $course->id,
-            'datestart' => gmmktime(12, 0, 0, 10, 20, 2026),
-            'dateend' => gmmktime(12, 0, 0, 10, 20, 2026),
+            'datestart' => gmmktime(12, 0, 0, 10, 20, 2030),
+            'dateend' => gmmktime(12, 0, 0, 10, 20, 2030),
         ]);
         $this->findatime = $DB->get_record('findatime', ['id' => $module->id]);
         $this->context = \context_module::instance($module->cmid);

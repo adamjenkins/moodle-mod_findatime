@@ -52,7 +52,7 @@ final class audit_fixes_test extends \advanced_testcase {
     protected $starts;
 
     /**
-     * An activity on 20 October 2026, 09:00-11:00 London time, without groups.
+     * An activity on 20 October 2030, 09:00-11:00 London time, without groups.
      */
     protected function setUp(): void {
         global $DB;
@@ -63,8 +63,8 @@ final class audit_fixes_test extends \advanced_testcase {
             'course' => $this->course->id,
             'name' => 'Q&A',
             'timezone' => 'Europe/London',
-            'datestart' => gmmktime(12, 0, 0, 10, 20, 2026),
-            'dateend' => gmmktime(12, 0, 0, 10, 20, 2026),
+            'datestart' => gmmktime(12, 0, 0, 10, 20, 2030),
+            'dateend' => gmmktime(12, 0, 0, 10, 20, 2030),
             'daystartmins' => 540,
             'dayendmins' => 660,
             'duration' => 30,
@@ -174,9 +174,9 @@ final class audit_fixes_test extends \advanced_testcase {
             'daystartmins' => 1439,
             'dayendmins' => 2000,
             'duration' => 1000,
-            'datestart' => slots::civil_midnight('2026-10-20', $tz),
-            'dateend' => slots::civil_midnight('2026-10-10', $tz),
-            'autoconfirm' => gmmktime(0, 0, 0, 1, 1, 2030),
+            'datestart' => slots::civil_midnight('2030-10-20', $tz),
+            'dateend' => slots::civil_midnight('2030-10-10', $tz),
+            'autoconfirm' => gmmktime(0, 0, 0, 1, 1, 2035),
         ]);
         $this->assertSame(30, $record->slotsize);
         $this->assertSame(1410, $record->daystartmins);
@@ -203,20 +203,20 @@ final class audit_fixes_test extends \advanced_testcase {
         availability::save($this->findatime, $user->id, [$this->starts[0] => 1, $this->starts[1] => 1]);
         meetings::confirm($this->access(), 0, $this->starts[0], '', 0);
         $DB->set_field('findatime', 'autoconfirmdone', 1, ['id' => $this->findatime->id]);
-        $DB->set_field('findatime', 'autoconfirm', gmmktime(12, 0, 0, 10, 19, 2026), ['id' => $this->findatime->id]);
+        $DB->set_field('findatime', 'autoconfirm', gmmktime(12, 0, 0, 10, 19, 2030), ['id' => $this->findatime->id]);
 
         findatime_reset_userdata((object)['courseid' => $this->course->id, 'timeshift' => 14 * DAYSECS]);
 
         $after = $DB->get_record('findatime', ['id' => $this->findatime->id]);
         $slots = new slots($after);
         $this->assertSame(
-            [gmmktime(9, 0, 0, 11, 3, 2026), gmmktime(9, 30, 0, 11, 3, 2026)],
+            [gmmktime(9, 0, 0, 11, 3, 2030), gmmktime(9, 30, 0, 11, 3, 2030)],
             array_slice($slots->get_starts(), 0, 2)
         );
         foreach (array_keys(availability::get_user_statuses($after->id, $user->id)) as $slotstart) {
             $this->assertTrue($slots->contains($slotstart));
         }
-        $this->assertEquals(gmmktime(9, 0, 0, 11, 3, 2026), meetings::get_current($after->id, 0)->timestart);
+        $this->assertEquals(gmmktime(9, 0, 0, 11, 3, 2030), meetings::get_current($after->id, 0)->timestart);
         $this->assertSame(0, (int)$after->autoconfirmdone);
     }
 }

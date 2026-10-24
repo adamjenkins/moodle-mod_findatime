@@ -45,8 +45,8 @@ final class auto_confirm_test extends \advanced_testcase {
         $module = $gen->create_module('findatime', [
             'course' => $course->id,
             'groupmode' => SEPARATEGROUPS,
-            'datestart' => gmmktime(12, 0, 0, 10, 20, 2026),
-            'dateend' => gmmktime(12, 0, 0, 10, 20, 2026),
+            'datestart' => gmmktime(12, 0, 0, 10, 20, 2030),
+            'dateend' => gmmktime(12, 0, 0, 10, 20, 2030),
             'daystartmins' => 540,
             'dayendmins' => 660,
             'duration' => 30,

@@ -120,6 +120,21 @@ class availability {
     }
 
     /**
+     * Whether availability can still be marked: no RSVP date, or it has not passed.
+     *
+     * After the RSVP date the answers given by then are final, and only they count when the meeting
+     * time is set.
+     *
+     * @param \stdClass $findatime Instance record.
+     * @param int|null $now Time to check at (default: now).
+     * @return bool
+     */
+    public static function responses_open(\stdClass $findatime, ?int $now = null): bool {
+        $rsvpby = (int)($findatime->rsvpby ?? 0);
+        return !$rsvpby || ($now ?? time()) < $rsvpby;
+    }
+
+    /**
      * Replace a user's availability with a new set.
      *
      * Every slot start is checked against the activity's slot set and every status against
@@ -131,9 +146,14 @@ class availability {
      * @param array $statuses slotstart => status; unavailable slots are simply absent.
      * @return \stdClass The response row.
      * @throws \invalid_parameter_exception
+     * @throws \moodle_exception When the RSVP date has passed.
      */
     public static function save(\stdClass $findatime, int $userid, array $statuses): \stdClass {
         global $DB;
+
+        if (!self::responses_open($findatime)) {
+            throw new \moodle_exception('errorrsvpclosed', 'findatime');
+        }
 
         $slots = new slots($findatime);
         $allowed = [slots::STATUS_AVAILABLE];

@@ -73,7 +73,9 @@ class get_grid extends external_api {
             'slotsize' => (int)$findatime->slotsize,
             'duration' => (int)$findatime->duration,
             'allowifneedbe' => !empty($findatime->allowifneedbe),
-            'canrespond' => $access->can_respond($USER->id),
+            'canrespond' => $access->can_respond($USER->id) && availability::responses_open($findatime),
+            'rsvpby' => (int)($findatime->rsvpby ?? 0),
+            'responsesopen' => availability::responses_open($findatime),
             'responded' => availability::has_responded($findatime->id, $USER->id),
             'slots' => $result,
         ];
@@ -91,7 +93,9 @@ class get_grid extends external_api {
             'slotsize' => new external_value(PARAM_INT, 'Slot length in minutes'),
             'duration' => new external_value(PARAM_INT, 'Meeting length in minutes'),
             'allowifneedbe' => new external_value(PARAM_BOOL, 'Whether "if need be" may be chosen'),
-            'canrespond' => new external_value(PARAM_BOOL, 'Whether the user may mark availability'),
+            'canrespond' => new external_value(PARAM_BOOL, 'Whether the user may mark availability now'),
+            'rsvpby' => new external_value(PARAM_INT, 'When responses close, 0 = never'),
+            'responsesopen' => new external_value(PARAM_BOOL, 'Whether the RSVP date has not passed yet'),
             'responded' => new external_value(PARAM_BOOL, 'Whether the user has submitted availability'),
             'slots' => new external_multiple_structure(new external_single_structure([
                 'slotstart' => new external_value(PARAM_INT, 'Slot start timestamp'),

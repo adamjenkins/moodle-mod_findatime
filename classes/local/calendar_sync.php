@@ -41,7 +41,7 @@ class calendar_sync {
     }
 
     /**
-     * Create, update or delete the instance's deadline event (the automatic confirmation time).
+     * Create, update or delete the instance's deadline event (the RSVP date, else the automatic confirmation).
      *
      * @param \stdClass $findatime Instance record.
      */
@@ -51,7 +51,9 @@ class calendar_sync {
 
         $existing = $DB->get_record('event', ['modulename' => 'findatime', 'instance' => $findatime->id,
             'eventtype' => self::EVENTTYPE_DUE], 'id', IGNORE_MULTIPLE);
-        if (empty($findatime->autoconfirm)) {
+        // Availability is due at the RSVP date; without one, before the automatic confirmation.
+        $due = (int)($findatime->rsvpby ?? 0) ?: (int)$findatime->autoconfirm;
+        if (!$due) {
             if ($existing) {
                 \calendar_event::load($existing->id)->delete();
             }
@@ -68,8 +70,8 @@ class calendar_sync {
             'instance' => $findatime->id,
             'eventtype' => self::EVENTTYPE_DUE,
             'type' => CALENDAR_EVENT_TYPE_ACTION,
-            'timestart' => $findatime->autoconfirm,
-            'timesort' => $findatime->autoconfirm,
+            'timestart' => $due,
+            'timesort' => $due,
             'timeduration' => 0,
             'visible' => instance_is_visible('findatime', $findatime),
         ];
@@ -123,10 +125,64 @@ class calendar_sync {
         if ($event) {
             $event->update($data, false);
         } else {
+            // A copy kept when the activity was deleted comes back with a restored activity: replace it.
+            $DB->delete_records('event', ['uuid' => self::kept_signature(
+                $findatime->course,
+                (int)$meeting->groupid,
+                (int)$meeting->timestart
+            ), 'modulename' => '']);
             $event = \calendar_event::create($data, false);
             $meeting->eventid = $event->id;
             $DB->set_field('findatime_meetings', 'eventid', $event->id, ['id' => $meeting->id]);
         }
+    }
+
+    /**
+     * Keep the calendar events of meetings that have taken place when the activity is deleted.
+     *
+     * They become ordinary group events (course events without groups) that no longer belong to the
+     * module, so core's deletion of the module's events leaves them alone. Each is tagged with a
+     * signature in its uuid, so that restoring the activity (for example from the recycle bin)
+     * replaces the kept copy instead of duplicating it.
+     *
+     * @param \stdClass $findatime Instance record.
+     * @return int Number of events kept.
+     */
+    public static function keep_past_meetings(\stdClass $findatime): int {
+        global $DB;
+        $kept = 0;
+        foreach ($DB->get_records('findatime_meetings', ['findatimeid' => $findatime->id]) as $meeting) {
+            if ((int)$meeting->status !== meetings::STATUS_CONFIRMED || !meetings::has_ended($meeting)) {
+                continue;
+            }
+            $event = !empty($meeting->eventid) ? $DB->get_record('event', ['id' => $meeting->eventid]) : null;
+            if (!$event || $event->modulename !== 'findatime' || (int)$event->instance !== (int)$findatime->id) {
+                continue;
+            }
+            $DB->update_record('event', (object)[
+                'id' => $event->id,
+                'modulename' => '',
+                'instance' => 0,
+                'component' => null,
+                'eventtype' => $meeting->groupid ? 'group' : 'course',
+                'uuid' => self::kept_signature($findatime->course, (int)$meeting->groupid, (int)$meeting->timestart),
+                'timemodified' => time(),
+            ]);
+            $kept++;
+        }
+        return $kept;
+    }
+
+    /**
+     * The uuid marking a kept meeting event.
+     *
+     * @param int $courseid Course id.
+     * @param int $groupid Group id (0 = none).
+     * @param int $timestart Meeting start.
+     * @return string
+     */
+    public static function kept_signature(int $courseid, int $groupid, int $timestart): string {
+        return 'mod_findatime-meeting-' . $courseid . '-' . $groupid . '-' . $timestart;
     }
 
     /**

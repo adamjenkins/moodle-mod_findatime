@@ -57,9 +57,9 @@ final class lib_test extends \advanced_testcase {
         $this->course = $gen->create_course();
         $this->module = $gen->create_module('findatime', [
             'course' => $this->course->id,
-            'datestart' => gmmktime(12, 0, 0, 10, 20, 2026),
-            'dateend' => gmmktime(12, 0, 0, 10, 20, 2026),
-            'autoconfirm' => gmmktime(12, 0, 0, 10, 19, 2026),
+            'datestart' => gmmktime(12, 0, 0, 10, 20, 2030),
+            'dateend' => gmmktime(12, 0, 0, 10, 20, 2030),
+            'autoconfirm' => gmmktime(12, 0, 0, 10, 19, 2030),
         ]);
         $this->findatime = $DB->get_record('findatime', ['id' => $this->module->id]);
         $this->student = $gen->create_and_enrol($this->course, 'student');

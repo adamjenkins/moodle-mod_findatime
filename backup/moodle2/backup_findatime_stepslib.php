@@ -32,7 +32,8 @@ class backup_findatime_activity_structure_step extends backup_activity_structure
 
         $findatime = new backup_nested_element('findatime', ['id'], [
             'name', 'intro', 'introformat', 'timezone', 'datestart', 'dateend', 'daystartmins', 'dayendmins',
-            'slotsize', 'duration', 'allowifneedbe', 'memberconfirm', 'autoconfirm', 'autoconfirmdone',
+            'slotsize', 'duration', 'allowifneedbe', 'memberconfirm', 'autoconfirm', 'autoconfirmdone', 'rsvpby', 'reminders',
+            'reminderssent',
             'completionsubmit', 'timecreated', 'timemodified',
         ]);
         $responses = new backup_nested_element('responses');
@@ -41,7 +42,7 @@ class backup_findatime_activity_structure_step extends backup_activity_structure
         $slot = new backup_nested_element('slot', ['id'], ['slotstart', 'status']);
         $meetings = new backup_nested_element('meetings');
         $meeting = new backup_nested_element('meeting', ['id'], [
-            'groupid', 'timestart', 'duration', 'location', 'status', 'source', 'usermodified', 'timecreated',
+            'groupid', 'timestart', 'duration', 'location', 'status', 'source', 'usermodified', 'timenotified', 'timecreated',
             'timemodified',
         ]);
 

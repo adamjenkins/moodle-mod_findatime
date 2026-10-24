@@ -55,8 +55,8 @@ final class get_overlap_test extends \advanced_testcase {
         $this->module = $gen->create_module('findatime', [
             'course' => $course->id,
             'groupmode' => $groupmode,
-            'datestart' => gmmktime(12, 0, 0, 10, 20, 2026),
-            'dateend' => gmmktime(12, 0, 0, 10, 20, 2026),
+            'datestart' => gmmktime(12, 0, 0, 10, 20, 2030),
+            'dateend' => gmmktime(12, 0, 0, 10, 20, 2030),
             'daystartmins' => 540,
             'dayendmins' => 660,
         ]);

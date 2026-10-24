@@ -66,6 +66,27 @@ const openConfirm = (cmid, groupid, timestart, trigger) => {
 };
 
 /**
+ * Open the form sending the meeting details to the group.
+ *
+ * @param {number} cmid Course module id.
+ * @param {number} groupid Group id.
+ * @param {HTMLElement} trigger Element to return focus to.
+ */
+const openSendDetails = (cmid, groupid, trigger) => {
+    const form = new ModalForm({
+        formClass: 'mod_findatime\\form\\send_details',
+        args: {cmid: cmid, groupid: groupid},
+        modalConfig: {title: getString('senddetails', 'mod_findatime')},
+        saveButtonText: getString('send', 'mod_findatime'),
+        returnFocus: trigger,
+    });
+    form.addEventListener(form.events.FORM_SUBMITTED, (e) => {
+        Notification.addNotification({message: e.detail.notice, type: 'success'});
+    });
+    form.show();
+};
+
+/**
  * Ask, then cancel the meeting.
  *
  * @param {number} cmid Course module id.
@@ -98,7 +119,7 @@ const cancelMeeting = (cmid, groupid) => {
  */
 export const init = (cmid, groupid) => {
     document.addEventListener('click', (e) => {
-        const button = e.target.closest('[data-action="confirm"], [data-action="cancel"]');
+        const button = e.target.closest('[data-action="confirm"], [data-action="cancel"], [data-action="senddetails"]');
         if (!button || !button.closest('.path-mod-findatime')) {
             return;
         }
@@ -108,6 +129,8 @@ export const init = (cmid, groupid) => {
         e.preventDefault();
         if (button.dataset.action === 'confirm') {
             openConfirm(cmid, groupid, parseInt(button.dataset.timestart || '0', 10), button);
+        } else if (button.dataset.action === 'senddetails') {
+            openSendDetails(cmid, groupid, button);
         } else {
             cancelMeeting(cmid, groupid);
         }

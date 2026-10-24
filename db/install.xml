@@ -22,6 +22,9 @@
         <FIELD NAME="memberconfirm" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Any group member may confirm for their own group"/>
         <FIELD NAME="autoconfirm" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="When to confirm the most popular slot automatically, 0 = never"/>
         <FIELD NAME="autoconfirmdone" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="rsvpby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Responses close at this time, 0 = never"/>
+        <FIELD NAME="reminders" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated minutes before rsvpby to remind non-respondents"/>
+        <FIELD NAME="reminderssent" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated reminder offsets already processed"/>
         <FIELD NAME="completionsubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -32,6 +35,7 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="autoconfirm" UNIQUE="false" FIELDS="autoconfirmdone, autoconfirm"/>
+        <INDEX NAME="rsvpby" UNIQUE="false" FIELDS="rsvpby"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="findatime_responses" COMMENT="One row per user who has submitted availability">
@@ -78,6 +82,7 @@
         <FIELD NAME="source" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1 = confirmed by a person, 2 = auto-confirmed"/>
         <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Calendar event derived from this meeting"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Who last confirmed or cancelled; 0 = the system"/>
+        <FIELD NAME="timenotified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="When the meeting details were last sent to the group"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

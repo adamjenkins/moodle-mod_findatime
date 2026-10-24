@@ -36,6 +36,8 @@ class meetings {
     public const SOURCE_MANUAL = 1;
     /** @var int Confirmed by the automatic confirmation task. */
     public const SOURCE_AUTO = 2;
+    /** @var int Shortest time between two sendings of the meeting details, in seconds. */
+    public const RESEND_INTERVAL = 600;
 
     /**
      * The current meeting row of each group of an instance.
@@ -103,6 +105,8 @@ class meetings {
      * @param string $location Free-text location or URL.
      * @param int $actorid Who confirms (0 = the system).
      * @param int $source SOURCE_MANUAL or SOURCE_AUTO.
+     * @param string $note Optional note included in the notification.
+     * @param bool $notify Whether to notify the group's members.
      * @return \stdClass The meeting record.
      * @throws \moodle_exception When the time is not a valid meeting start or is in the past.
      */
@@ -112,7 +116,9 @@ class meetings {
         int $timestart,
         string $location,
         int $actorid,
-        int $source = self::SOURCE_MANUAL
+        int $source = self::SOURCE_MANUAL,
+        string $note = '',
+        bool $notify = true
     ): \stdClass {
         global $DB;
         $findatime = $access->get_findatime();
@@ -135,6 +141,7 @@ class meetings {
             'findatimeid' => $findatime->id,
             'groupid' => $groupid,
             'eventid' => null,
+            'timenotified' => 0,
             'timecreated' => $now,
         ];
         $meeting->timestart = $timestart;
@@ -165,7 +172,11 @@ class meetings {
         $event->add_record_snapshot('findatime_meetings', $meeting);
         $event->trigger();
 
-        self::notify($access, $meeting, 'meetingconfirmed', $actorid);
+        if ($notify) {
+            self::notify($access, $meeting, 'meetingconfirmed', $actorid, $note);
+            $meeting->timenotified = time();
+            $DB->set_field('findatime_meetings', 'timenotified', $meeting->timenotified, ['id' => $meeting->id]);
+        }
         return $meeting;
     }
 
@@ -236,78 +247,100 @@ class meetings {
     }
 
     /**
+     * Send the meeting details to the group again (or for the first time, when it was confirmed silently).
+     *
+     * Limited to once every RESEND_INTERVAL seconds per meeting, so that someone allowed to confirm
+     * cannot flood the group.
+     *
+     * @param access $access Access rules of the activity.
+     * @param int $groupid Group id.
+     * @param int $actorid Who sends.
+     * @param string $note Optional note from the sender, included in the message.
+     * @return int Number of messages sent.
+     * @throws \moodle_exception When there is no upcoming confirmed meeting, or details were sent too recently.
+     */
+    public static function send_details(access $access, int $groupid, int $actorid, string $note = ''): int {
+        global $DB;
+        $meeting = self::get_current($access->get_findatime()->id, $groupid);
+        if (!$meeting || (int)$meeting->status !== self::STATUS_CONFIRMED) {
+            throw new \moodle_exception('errornomeeting', 'findatime');
+        }
+        if (self::has_ended($meeting)) {
+            throw new \moodle_exception('errormeetingended', 'findatime');
+        }
+        if ((int)$meeting->timenotified > time() - self::RESEND_INTERVAL) {
+            throw new \moodle_exception('errordetailsrecent', 'findatime', '', format_time(self::RESEND_INTERVAL));
+        }
+        $sent = self::notify($access, $meeting, 'meetingdetails', $actorid, $note);
+        $DB->set_field('findatime_meetings', 'timenotified', time(), ['id' => $meeting->id]);
+        return $sent;
+    }
+
+    /**
      * Notify the group's members (except the person who acted) through the Message API.
      *
      * Each message is written in the recipient's language, with the time in their timezone.
      *
      * @param access $access Access rules of the activity.
      * @param \stdClass $meeting Meeting record.
-     * @param string $provider Message provider: meetingconfirmed or meetingcancelled.
+     * @param string $provider Message provider: meetingconfirmed, meetingcancelled or meetingdetails.
      * @param int $actorid Who acted (0 = the system).
+     * @param string $note Optional note from the person who acted.
+     * @return int Number of messages sent.
      */
-    protected static function notify(access $access, \stdClass $meeting, string $provider, int $actorid): void {
-        global $CFG;
-        $findatime = $access->get_findatime();
-        $cm = $access->get_cm();
-        $context = $access->get_context();
+    protected static function notify(
+        access $access,
+        \stdClass $meeting,
+        string $provider,
+        int $actorid,
+        string $note = ''
+    ): int {
         $members = $access->members((int)$meeting->groupid);
         unset($members[$actorid]);
         if (!$members) {
-            return;
+            return 0;
         }
-        $from = $actorid > 0 ? \core_user::get_user($actorid) : \core_user::get_noreply_user();
-        $url = new \moodle_url('/mod/findatime/view.php', ['id' => $cm->id, 'group' => $meeting->groupid]);
-        // Plain text: the messages are FORMAT_PLAIN and the HTML version is escaped as a whole below.
-        $groupname = $meeting->groupid ? access::group_name((string)groups_get_group_name($meeting->groupid), $context) : '';
-        $activityname = format_string($findatime->name, true, ['context' => $context, 'escape' => false]);
+        $from = $actorid > 0 ? \core_user::get_user($actorid) : null;
+        $url = new \moodle_url('/mod/findatime/view.php', ['id' => $access->get_cm()->id, 'group' => $meeting->groupid]);
+        $activityname = notifier::activity_name($access);
+        $groupsuffix = notifier::group_suffix($access, (int)$meeting->groupid);
+        $note = trim($note);
 
-        foreach (array_keys($members) as $userid) {
-            $recipient = \core_user::get_user($userid);
-            if (!$recipient || !empty($recipient->deleted) || !empty($recipient->suspended)) {
-                continue;
-            }
-            $lang = !empty($recipient->lang) ? $recipient->lang : $CFG->lang;
-            $previouslang = force_current_language($lang);
-            try {
-                $time = userdate(
-                    $meeting->timestart,
-                    get_string('strftimedaydatetime', 'langconfig'),
-                    \core_date::get_user_timezone($recipient)
-                );
+        return notifier::send(
+            $access,
+            array_keys($members),
+            $provider,
+            $actorid,
+            $url,
+            function (
+                \stdClass $recipient,
+                string $timezone
+            ) use (
+                $meeting,
+                $provider,
+                $from,
+                $activityname,
+                $groupsuffix,
+                $note
+            ): array {
                 $a = (object)[
                     'name' => $activityname,
-                    'group' => $groupname !== '' ? ' (' . $groupname . ')' : '',
-                    'time' => $time,
+                    'group' => $groupsuffix,
+                    'time' => userdate($meeting->timestart, get_string('strftimedaydatetime', 'langconfig'), $timezone),
                     'duration' => format_time((int)$meeting->duration * MINSECS),
                     'location' => (string)$meeting->location,
-                    'by' => $actorid > 0 ? fullname($from) : get_string('theautomaticconfirmation', 'findatime'),
-                    'url' => $url->out(false),
+                    'by' => $from ? fullname($from) : get_string('theautomaticconfirmation', 'findatime'),
                 ];
                 $subject = get_string('message' . $provider . 'subject', 'findatime', $a);
                 $body = get_string('message' . $provider . 'body', 'findatime', $a);
-                if ($a->location !== '' && $provider === 'meetingconfirmed') {
+                if ($a->location !== '' && $provider !== 'meetingcancelled') {
                     $body .= "\n" . get_string('messagelocation', 'findatime', $a->location);
                 }
-                $body .= "\n\n" . $a->url;
-
-                $message = new \core\message\message();
-                $message->component = 'mod_findatime';
-                $message->name = $provider;
-                $message->userfrom = $from;
-                $message->userto = $recipient;
-                $message->subject = $subject;
-                $message->fullmessage = $body;
-                $message->fullmessageformat = FORMAT_PLAIN;
-                $message->fullmessagehtml = text_to_html(s($body), false, false, true);
-                $message->smallmessage = $subject;
-                $message->notification = 1;
-                $message->contexturl = $url->out(false);
-                $message->contexturlname = $activityname;
-                $message->courseid = $cm->course;
-                message_send($message);
-            } finally {
-                force_current_language($previouslang);
+                if ($note !== '') {
+                    $body .= "\n\n" . get_string('messagenote', 'findatime', $a->by) . "\n" . $note;
+                }
+                return [$subject, $body];
             }
-        }
+        );
     }
 }

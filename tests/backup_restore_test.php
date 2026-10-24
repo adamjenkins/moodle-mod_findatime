@@ -59,15 +59,15 @@ final class backup_restore_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
         $gen = $this->getDataGenerator();
-        $this->course = $gen->create_course(['groupmode' => SEPARATEGROUPS, 'startdate' => gmmktime(0, 0, 0, 10, 1, 2026)]);
+        $this->course = $gen->create_course(['groupmode' => SEPARATEGROUPS, 'startdate' => gmmktime(0, 0, 0, 10, 1, 2030)]);
         $module = $gen->create_module('findatime', [
             'course' => $this->course->id,
             'timezone' => 'Europe/London',
-            'datestart' => gmmktime(12, 0, 0, 10, 20, 2026),
-            'dateend' => gmmktime(12, 0, 0, 10, 21, 2026),
+            'datestart' => gmmktime(12, 0, 0, 10, 20, 2030),
+            'dateend' => gmmktime(12, 0, 0, 10, 21, 2030),
             'daystartmins' => 540,
             'dayendmins' => 660,
-            'autoconfirm' => gmmktime(12, 0, 0, 10, 19, 2026),
+            'autoconfirm' => gmmktime(12, 0, 0, 10, 19, 2030),
             'memberconfirm' => 1,
         ]);
         $this->findatime = $DB->get_record('findatime', ['id' => $module->id]);
@@ -225,12 +225,12 @@ final class backup_restore_test extends \advanced_testcase {
         $shift = 14 * DAYSECS;
         $restored = $this->backup_and_restore(true, $shift);
         $london = new \DateTimeZone('Europe/London');
-        $this->assertEquals(slots::civil_midnight('2026-11-03', $london), $restored->datestart);
-        $this->assertEquals(slots::civil_midnight('2026-11-04', $london), $restored->dateend);
+        $this->assertEquals(slots::civil_midnight('2030-11-03', $london), $restored->datestart);
+        $this->assertEquals(slots::civil_midnight('2030-11-04', $london), $restored->dateend);
         // 12:00 UTC on 19 October is 13:00 BST; it becomes 13:00 GMT (= 13:00 UTC) on 2 November.
-        $this->assertEquals(gmmktime(13, 0, 0, 11, 2, 2026), $restored->autoconfirm);
+        $this->assertEquals(gmmktime(13, 0, 0, 11, 2, 2030), $restored->autoconfirm);
         $newgroupid = (int)$DB->get_field('groups', 'id', ['courseid' => $restored->course, 'name' => 'Team']);
-        $this->assertEquals(gmmktime(9, 0, 0, 11, 3, 2026), meetings::get_current($restored->id, $newgroupid)->timestart);
+        $this->assertEquals(gmmktime(9, 0, 0, 11, 3, 2030), meetings::get_current($restored->id, $newgroupid)->timestart);
         $slots = new slots($restored);
         $statuses = availability::get_user_statuses($restored->id, $this->students['a']->id);
         $this->assertCount(2, $statuses);

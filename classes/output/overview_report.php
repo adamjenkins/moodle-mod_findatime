@@ -126,6 +126,8 @@ class overview_report implements \renderable, \templatable {
             'hasungrouped' => $ungrouped > 0,
             'autoconfirm' => empty($findatime->autoconfirm) ? '' : userdate($findatime->autoconfirm, $format, $usertz),
             'autoconfirmdone' => !empty($findatime->autoconfirmdone),
+            'rsvpby' => empty($findatime->rsvpby) ? '' : userdate($findatime->rsvpby, $format, $usertz),
+            'rsvpopen' => availability::responses_open($findatime),
         ];
     }
 }

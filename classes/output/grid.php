@@ -87,6 +87,9 @@ class grid implements \renderable, \templatable {
             'hasslots' => $slots->count() > 0,
             'allowifneedbe' => !empty($this->findatime->allowifneedbe),
             'lastsaved' => $response ? userdate($response->timemodified) : '',
+            'open' => availability::responses_open($this->findatime),
+            'rsvpby' => empty($this->findatime->rsvpby) ? ''
+                : userdate($this->findatime->rsvpby, get_string('strftimedaydatetime', 'langconfig')),
         ];
     }
 }

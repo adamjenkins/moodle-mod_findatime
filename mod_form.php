@@ -103,6 +103,19 @@ class mod_findatime_mod_form extends moodleform_mod {
         $mform->addElement('advcheckbox', 'allowifneedbe', get_string('allowifneedbe', 'findatime'));
         $mform->setDefault('allowifneedbe', 1);
 
+        $mform->addElement('header', 'responseshdr', get_string('responsessettings', 'findatime'));
+        $mform->addElement('date_time_selector', 'rsvpby', get_string('rsvpby', 'findatime'), ['optional' => true]);
+        $mform->addHelpButton('rsvpby', 'rsvpby', 'findatime');
+        $mform->addElement(
+            'autocomplete',
+            'reminders',
+            get_string('reminders', 'findatime'),
+            \mod_findatime\local\reminders::offset_options(),
+            ['multiple' => true, 'noselectionstring' => get_string('noreminders', 'findatime')]
+        );
+        $mform->addHelpButton('reminders', 'reminders', 'findatime');
+        $mform->hideIf('reminders', 'rsvpby[enabled]', 'notchecked');
+
         $mform->addElement('header', 'confirmationhdr', get_string('confirmation', 'findatime'));
         $mform->addElement('advcheckbox', 'memberconfirm', get_string('memberconfirm', 'findatime'));
         $mform->addHelpButton('memberconfirm', 'memberconfirm', 'findatime');
@@ -146,6 +159,9 @@ class mod_findatime_mod_form extends moodleform_mod {
             $defaultvalues['datestart'] = slots::convert_civil_midnight((int)$defaultvalues['datestart'], $reftz, $usertz);
             $defaultvalues['dateend'] = slots::convert_civil_midnight((int)$defaultvalues['dateend'], $reftz, $usertz);
         }
+        if (isset($defaultvalues['reminders']) && !is_array($defaultvalues['reminders'])) {
+            $defaultvalues['reminders'] = \mod_findatime\local\reminders::parse((string)$defaultvalues['reminders']);
+        }
     }
 
     /**
@@ -162,6 +178,11 @@ class mod_findatime_mod_form extends moodleform_mod {
         if (empty($data->autoconfirm)) {
             $data->autoconfirm = 0;
         }
+        if (empty($data->rsvpby)) {
+            $data->rsvpby = 0;
+        }
+        // Reminders only make sense before an RSVP date.
+        $data->reminders = $data->rsvpby ? \mod_findatime\local\reminders::format((array)($data->reminders ?? [])) : '';
         if (!empty($data->completionunlocked)) {
             $suffix = $this->get_suffix();
             if (empty($data->{'completionsubmit' . $suffix})) {
@@ -232,11 +253,15 @@ class mod_findatime_mod_form extends moodleform_mod {
                 ['count' => $slots->count(), 'max' => slots::MAX_SLOTS]
             );
         }
-        if (!empty($data['autoconfirm']) && $slots->count()) {
-            $starts = $slots->get_starts();
-            if ((int)$data['autoconfirm'] >= end($starts)) {
-                $errors['autoconfirm'] = get_string('errorautoconfirmlate', 'findatime');
-            }
+        $starts = $slots->get_starts();
+        if (!empty($data['autoconfirm']) && $starts && (int)$data['autoconfirm'] >= end($starts)) {
+            $errors['autoconfirm'] = get_string('errorautoconfirmlate', 'findatime');
+        }
+        if (!empty($data['rsvpby']) && $starts && (int)$data['rsvpby'] >= end($starts)) {
+            $errors['rsvpby'] = get_string('errorrsvplate', 'findatime');
+        }
+        if (!empty($data['rsvpby']) && !empty($data['autoconfirm']) && (int)$data['autoconfirm'] < (int)$data['rsvpby']) {
+            $errors['autoconfirm'] = get_string('errorautoconfirmbeforersvp', 'findatime');
         }
         return $errors;
     }

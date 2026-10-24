@@ -191,3 +191,7 @@
     border-color: #198754;
     border-width: 2px;
 }
+
+.path-mod-findatime .mod-findatime-readonly .mod-findatime-cell {
+    cursor: default;
+}

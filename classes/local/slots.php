@@ -134,8 +134,8 @@ class slots {
      * Used where settings arrive without the form, such as a restored backup (untrusted input):
      * a valid timezone and slot size, a window of at least one slot inside the day, a meeting
      * length of whole slots that fits the window, whole-day dates with the last day not before the
-     * first, at most MAX_DAYS days and MAX_SLOTS slots, and an automatic confirmation before the
-     * last slot (otherwise none).
+     * first, at most MAX_DAYS days and MAX_SLOTS slots, an automatic confirmation and an RSVP date
+     * before the last slot (otherwise none), and no automatic confirmation before the RSVP date.
      *
      * @param \stdClass $record Instance data; changed in place and returned.
      * @return \stdClass
@@ -160,13 +160,15 @@ class slots {
         $record->datestart = self::civil_midnight($first, $tz);
         $record->dateend = self::civil_midnight(min($last, $limit), $tz);
 
-        if (!empty($record->autoconfirm)) {
-            $starts = (new self($record))->get_starts();
-            if (!$starts || (int)$record->autoconfirm >= end($starts)) {
-                $record->autoconfirm = 0;
+        $starts = (new self($record))->get_starts();
+        $last = $starts ? end($starts) : 0;
+        foreach (['autoconfirm', 'rsvpby'] as $field) {
+            if (empty($record->$field) || (int)$record->$field >= $last) {
+                $record->$field = 0;
             }
-        } else {
-            $record->autoconfirm = 0;
+        }
+        if ($record->rsvpby && $record->autoconfirm && $record->autoconfirm < $record->rsvpby) {
+            $record->autoconfirm = (int)$record->rsvpby;
         }
         return $record;
     }

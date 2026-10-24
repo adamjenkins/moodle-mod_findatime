@@ -26,6 +26,7 @@
     * totalmembers, totalresponded - Totals.
     * ungrouped, hasungrouped - Participants who belong to no group.
     * autoconfirm, autoconfirmdone - Automatic confirmation time, and whether it has run.
+    * rsvpby, rsvpopen - RSVP date (or empty), and whether responses are still open.
 
     Example context (json):
     {
@@ -41,10 +42,15 @@
         "ungrouped": 0,
         "hasungrouped": false,
         "autoconfirm": "",
-        "autoconfirmdone": false
+        "autoconfirmdone": false,
+        "rsvpby": "Friday, 2 October 2026, 5:00 PM",
+        "rsvpopen": true
     }
 }}
 <div class="mod-findatime-overview">
+    {{#rsvpby}}
+    <p>{{#rsvpopen}}{{#str}}rsvpbyoverview, mod_findatime, {{rsvpby}}{{/str}}{{/rsvpopen}}{{^rsvpopen}}{{#str}}rsvpclosedoverview, mod_findatime, {{rsvpby}}{{/str}}{{/rsvpopen}}</p>
+    {{/rsvpby}}
     {{#autoconfirm}}
     <p>{{#autoconfirmdone}}{{#str}}autoconfirmran, mod_findatime, {{autoconfirm}}{{/str}}{{/autoconfirmdone}}{{^autoconfirmdone}}{{#str}}autoconfirmwill, mod_findatime, {{autoconfirm}}{{/str}}{{/autoconfirmdone}}</p>
     {{/autoconfirm}}

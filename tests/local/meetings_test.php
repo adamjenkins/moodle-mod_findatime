@@ -19,7 +19,7 @@ namespace mod_findatime\local;
 /**
  * Tests for confirming and cancelling meetings, their calendar events and notifications.
  *
- * The activity runs on 20 October 2026, 09:00-11:00 London time (BST, UTC+1), so the
+ * The activity runs on 20 October 2030, 09:00-11:00 London time (BST, UTC+1), so the
  * 09:00 slot is 08:00 UTC, 09:00 in London and 04:00 in New York.
  *
  * @package    mod_findatime
@@ -56,8 +56,8 @@ final class meetings_test extends \advanced_testcase {
             'course' => $this->course->id,
             'name' => 'Kickoff',
             'timezone' => 'Europe/London',
-            'datestart' => gmmktime(12, 0, 0, 10, 20, 2026),
-            'dateend' => gmmktime(12, 0, 0, 10, 20, 2026),
+            'datestart' => gmmktime(12, 0, 0, 10, 20, 2030),
+            'dateend' => gmmktime(12, 0, 0, 10, 20, 2030),
             'daystartmins' => 540,
             'dayendmins' => 660,
             'duration' => 60,
@@ -107,7 +107,7 @@ final class meetings_test extends \advanced_testcase {
     public function test_confirm(): void {
         global $DB;
         $this->preventResetByRollback();
-        $start = gmmktime(8, 0, 0, 10, 20, 2026);
+        $start = gmmktime(8, 0, 0, 10, 20, 2030);
         $messages = $this->redirectMessages();
         $events = $this->redirectEvents();
 
@@ -153,12 +153,12 @@ final class meetings_test extends \advanced_testcase {
         global $DB;
         $this->preventResetByRollback();
         $this->redirectMessages();
-        $first = meetings::confirm($this->access(), $this->group->id, gmmktime(8, 0, 0, 10, 20, 2026), '', 0);
+        $first = meetings::confirm($this->access(), $this->group->id, gmmktime(8, 0, 0, 10, 20, 2030), '', 0);
         $events = $this->redirectEvents();
         $second = meetings::confirm(
             $this->access(),
             $this->group->id,
-            gmmktime(9, 0, 0, 10, 20, 2026),
+            gmmktime(9, 0, 0, 10, 20, 2030),
             'Online',
             $this->users['teacher']->id
         );
@@ -167,9 +167,9 @@ final class meetings_test extends \advanced_testcase {
         $this->assertSame((int)$first->eventid, (int)$second->eventid);
         $this->assertSame(1, $DB->count_records('findatime_meetings'));
         $this->assertSame(1, $DB->count_records('event', ['modulename' => 'findatime', 'eventtype' => 'meeting']));
-        $this->assertSame(gmmktime(9, 0, 0, 10, 20, 2026), (int)$DB->get_field('event', 'timestart', ['id' => $second->eventid]));
+        $this->assertSame(gmmktime(9, 0, 0, 10, 20, 2030), (int)$DB->get_field('event', 'timestart', ['id' => $second->eventid]));
         $confirmed = $this->first_event($events->get_events(), \mod_findatime\event\meeting_confirmed::class);
-        $this->assertSame(gmmktime(8, 0, 0, 10, 20, 2026), $confirmed->other['previoustimestart']);
+        $this->assertSame(gmmktime(8, 0, 0, 10, 20, 2030), $confirmed->other['previoustimestart']);
         $events->clear();
 
         $cancelled = meetings::cancel($this->access(), $this->group->id, $this->users['teacher']->id);
@@ -188,7 +188,7 @@ final class meetings_test extends \advanced_testcase {
     public function test_confirm_validation(): void {
         try {
             // 10:30 London + 60 minutes runs past the 11:00 window end.
-            meetings::confirm($this->access(), $this->group->id, gmmktime(9, 30, 0, 10, 20, 2026), '', 0);
+            meetings::confirm($this->access(), $this->group->id, gmmktime(9, 30, 0, 10, 20, 2030), '', 0);
             $this->fail('Expected an exception');
         } catch (\moodle_exception $e) {
             $this->assertSame('errornotameetingstart', $e->errorcode);
@@ -212,8 +212,8 @@ final class meetings_test extends \advanced_testcase {
         global $DB;
         $this->preventResetByRollback();
         $this->redirectMessages();
-        meetings::confirm($this->access(), $this->group->id, gmmktime(8, 0, 0, 10, 20, 2026), '', 0);
-        meetings::confirm($this->access(), $this->group2->id, gmmktime(9, 0, 0, 10, 20, 2026), '', 0);
+        meetings::confirm($this->access(), $this->group->id, gmmktime(8, 0, 0, 10, 20, 2030), '', 0);
+        meetings::confirm($this->access(), $this->group2->id, gmmktime(9, 0, 0, 10, 20, 2030), '', 0);
         groups_delete_group($this->group->id);
         $this->assertFalse($DB->record_exists('findatime_meetings', ['groupid' => $this->group->id]));
         $this->assertTrue($DB->record_exists('findatime_meetings', ['groupid' => $this->group2->id]));
@@ -228,8 +228,8 @@ final class meetings_test extends \advanced_testcase {
         require_once($CFG->dirroot . '/mod/findatime/lib.php');
         $this->preventResetByRollback();
         $this->redirectMessages();
-        $DB->set_field('findatime', 'autoconfirm', gmmktime(0, 0, 0, 10, 19, 2026), ['id' => $this->findatime->id]);
-        meetings::confirm($this->access(), $this->group->id, gmmktime(8, 0, 0, 10, 20, 2026), '', 0);
+        $DB->set_field('findatime', 'autoconfirm', gmmktime(0, 0, 0, 10, 19, 2030), ['id' => $this->findatime->id]);
+        meetings::confirm($this->access(), $this->group->id, gmmktime(8, 0, 0, 10, 20, 2030), '', 0);
         // Simulate a restore carrying a stale copy of the meeting event.
         $stale = $DB->get_record('event', ['modulename' => 'findatime', 'eventtype' => 'meeting']);
         unset($stale->id);

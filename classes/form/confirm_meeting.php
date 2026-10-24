@@ -141,6 +141,12 @@ class confirm_meeting extends \core_form\dynamic_form {
         $mform->setType('location', PARAM_TEXT);
         $mform->addHelpButton('location', 'location', 'findatime');
         $mform->addRule('location', get_string('maximumchars', '', 1333), 'maxlength', 1333, 'client');
+        $mform->addElement('advcheckbox', 'notify', get_string('notifymembers', 'findatime'));
+        $mform->setDefault('notify', 1);
+        $mform->addElement('textarea', 'note', get_string('messagetomembers', 'findatime'), ['rows' => 3, 'cols' => 50]);
+        $mform->setType('note', PARAM_TEXT);
+        $mform->addHelpButton('note', 'messagetomembers', 'findatime');
+        $mform->hideIf('note', 'notify', 'notchecked');
     }
 
     /**
@@ -162,6 +168,9 @@ class confirm_meeting extends \core_form\dynamic_form {
         if (\core_text::strlen((string)($data['location'] ?? '')) > 1333) {
             $errors['location'] = get_string('maximumchars', '', 1333);
         }
+        if (\core_text::strlen((string)($data['note'] ?? '')) > 2000) {
+            $errors['note'] = get_string('maximumchars', '', 2000);
+        }
         return $errors;
     }
 
@@ -174,7 +183,16 @@ class confirm_meeting extends \core_form\dynamic_form {
         global $USER, $PAGE;
         $data = $this->get_data();
         $access = $this->get_access();
-        meetings::confirm($access, $this->get_groupid(), (int)$data->timestart, (string)$data->location, (int)$USER->id);
+        meetings::confirm(
+            $access,
+            $this->get_groupid(),
+            (int)$data->timestart,
+            (string)$data->location,
+            (int)$USER->id,
+            meetings::SOURCE_MANUAL,
+            (string)($data->note ?? ''),
+            !empty($data->notify)
+        );
         $panel = new \mod_findatime\output\meeting_panel($access, $this->get_groupid(), (int)$USER->id);
         $output = $PAGE->get_renderer('core');
         return ['panelhtml' => $output->render_from_template(
