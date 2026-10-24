@@ -25,6 +25,7 @@
         <FIELD NAME="rsvpby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Responses close at this time, 0 = never"/>
         <FIELD NAME="reminders" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated minutes before rsvpby to remind non-respondents"/>
         <FIELD NAME="reminderssent" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated reminder offsets already processed"/>
+        <FIELD NAME="greyrequired" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Grey out times when a necessary participant is unavailable"/>
         <FIELD NAME="completionsubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -68,6 +69,21 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="responseid-slotstart" UNIQUE="true" FIELDS="responseid, slotstart"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="findatime_required" COMMENT="Necessary participants: the meeting time must suit them">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="findatimeid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="findatimeid" TYPE="foreign" FIELDS="findatimeid" REFTABLE="findatime" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="findatimeid-userid" UNIQUE="true" FIELDS="findatimeid, userid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="findatime_meetings" COMMENT="Confirmed (or cancelled) meetings, per group">

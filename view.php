@@ -54,7 +54,29 @@ if ($access->uses_groups()) {
     }
 }
 
+// With an RSVP date, it is shown in large type above the description, so this page prints the
+// description itself instead of the activity header.
+$rsvpbanner = '';
+if (!empty($findatime->rsvpby)) {
+    $rsvpbanner = html_writer::div(
+        get_string(
+            \mod_findatime\local\availability::responses_open($findatime) ? 'rsvpbanner' : 'rsvpbannerclosed',
+            'findatime',
+            userdate($findatime->rsvpby, get_string('strftimedaydatetime', 'langconfig'))
+        ),
+        'mod-findatime-rsvpbanner'
+    );
+    $PAGE->activityheader->set_description('');
+}
+
 echo $OUTPUT->header();
+
+if ($rsvpbanner !== '') {
+    echo $rsvpbanner;
+    if (trim(strip_tags((string)$findatime->intro)) !== '' || strpos((string)$findatime->intro, '<img') !== false) {
+        echo $OUTPUT->box(format_module_intro('findatime', $findatime, $cm->id), 'generalbox', 'intro');
+    }
+}
 
 echo html_writer::tag('p', s(\mod_findatime\output\helper::timezone_notice($findatime)), ['class' => 'mod-findatime-tznotice']);
 

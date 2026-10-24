@@ -65,6 +65,9 @@ class provider implements metadataprovider, pluginprovider, userlistprovider {
             'location' => 'privacy:metadata:findatime_meetings:location',
             'timemodified' => 'privacy:metadata:findatime_meetings:timemodified',
         ], 'privacy:metadata:findatime_meetings');
+        $collection->add_database_table('findatime_required', [
+            'userid' => 'privacy:metadata:findatime_required:userid',
+        ], 'privacy:metadata:findatime_required');
         $collection->add_subsystem_link('core_message', [], 'privacy:metadata:core_message');
         return $collection;
     }
@@ -87,6 +90,8 @@ class provider implements metadataprovider, pluginprovider, userlistprovider {
                                             WHERE r.userid = :userid", $params);
         $contextlist->add_from_sql($base . " JOIN {findatime_meetings} fm ON fm.findatimeid = f.id
                                             WHERE fm.usermodified = :userid", $params);
+        $contextlist->add_from_sql($base . " JOIN {findatime_required} rq ON rq.findatimeid = f.id
+                                            WHERE rq.userid = :userid", $params);
         return $contextlist;
     }
 
@@ -108,6 +113,8 @@ class provider implements metadataprovider, pluginprovider, userlistprovider {
                  JOIN {findatime_responses} r ON r.findatimeid = f.id WHERE cm.id = :cmid", $params);
         $userlist->add_from_sql('usermodified', "SELECT fm.usermodified $base
                  JOIN {findatime_meetings} fm ON fm.findatimeid = f.id WHERE cm.id = :cmid AND fm.usermodified > 0", $params);
+        $userlist->add_from_sql('userid', "SELECT rq.userid $base
+                 JOIN {findatime_required} rq ON rq.findatimeid = f.id WHERE cm.id = :cmid", $params);
     }
 
     /**
@@ -175,6 +182,9 @@ class provider implements metadataprovider, pluginprovider, userlistprovider {
             if ($meetings) {
                 $data->meetingsconfirmedorcancelled = $meetings;
             }
+            if ($DB->record_exists('findatime_required', ['findatimeid' => $findatimeid, 'userid' => $userid])) {
+                $data->necessaryparticipant = transform::yesno(true);
+            }
             writer::with_context($context)->export_data([], $data);
         }
     }
@@ -191,6 +201,7 @@ class provider implements metadataprovider, pluginprovider, userlistprovider {
             return;
         }
         \mod_findatime\local\availability::delete_for_instance($findatimeid);
+        \mod_findatime\local\required::delete_for_instance($findatimeid);
         $DB->set_field('findatime_meetings', 'usermodified', 0, ['findatimeid' => $findatimeid]);
     }
 
@@ -222,7 +233,7 @@ class provider implements metadataprovider, pluginprovider, userlistprovider {
     }
 
     /**
-     * Delete availability of users and anonymise the meetings they confirmed or cancelled.
+     * Delete availability and necessary-participant marks of users, and anonymise the meetings they confirmed or cancelled.
      *
      * @param int $findatimeid Instance id.
      * @param int[] $userids Users.
@@ -234,6 +245,7 @@ class provider implements metadataprovider, pluginprovider, userlistprovider {
         }
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $params['findatimeid'] = $findatimeid;
+        $DB->delete_records_select('findatime_required', "findatimeid = :findatimeid AND userid $insql", $params);
         $DB->set_field_select(
             'findatime_meetings',
             'usermodified',

@@ -78,8 +78,8 @@ final class overlap_test extends \basic_testcase {
         // 09:00: user 1 fully, user 2 only if need be (09:30). 09:30: user 1 fully, user 2 no (10:00 missing).
         // 10:00: user 1 no (10:30 missing), user 2 no. 10:30 cannot hold 60 minutes.
         $this->assertSame([
-            ['timestart' => $a, 'available' => [1], 'ifneedbe' => [2]],
-            ['timestart' => $b, 'available' => [1], 'ifneedbe' => []],
+            ['timestart' => $a, 'available' => [1], 'ifneedbe' => [2], 'missing' => []],
+            ['timestart' => $b, 'available' => [1], 'ifneedbe' => [], 'missing' => []],
         ], $candidates);
     }
 
@@ -99,6 +99,30 @@ final class overlap_test extends \basic_testcase {
         $this->assertSame([$d, $c, $b, $a], $starts);
         $this->assertCount(2, $overlap->candidates(30, 0, 2));
         $this->assertSame([$d], array_column($overlap->candidates(30, $c), 'timestart'));
+    }
+
+    /**
+     * A necessary participant who answered rules out the times they cannot make; one who has not
+     * answered rules out nothing; non-members are ignored.
+     */
+    public function test_required_participants(): void {
+        [$a, $b, $c, $d] = $this->s;
+        // User 3 is necessary and can only make 10:00 (if need be) and 10:30; users 1 and 2 like 09:00 best.
+        $statuses = [1 => [$a => 1, $b => 1, $c => 1], 2 => [$a => 1, $b => 1], 3 => [$c => 2, $d => 1]];
+        $overlap = new overlap($this->slots, [1, 2, 3], $statuses, [3, 99]);
+        $this->assertSame([3], $overlap->required_ids());
+        $this->assertSame([$a => [3], $b => [3]], $overlap->blocked());
+        $this->assertSame([$c, $d], array_column($overlap->candidates(30), 'timestart'));
+        $this->assertSame($c, $overlap->best(30, 0)['timestart']);
+        $all = $overlap->candidates(30, 0, 0, true);
+        $this->assertSame([3], $all[0]['missing']);
+        $this->assertSame($a, $all[0]['timestart']);
+
+        // Before answering, a necessary participant constrains nothing.
+        unset($statuses[3]);
+        $silent = new overlap($this->slots, [1, 2, 3], $statuses, [3]);
+        $this->assertSame([], $silent->blocked());
+        $this->assertSame($a, $silent->best(30, 0)['timestart']);
     }
 
     /**

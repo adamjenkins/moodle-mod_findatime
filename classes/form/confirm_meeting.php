@@ -93,9 +93,10 @@ class confirm_meeting extends \core_form\dynamic_form {
         $members = $access->members($this->get_groupid());
         $overlap = overlap::for_instance($findatime, array_keys($members), $slots);
         $counts = [];
-        foreach ($overlap->candidates((int)$findatime->duration, 0, 0) as $candidate) {
+        foreach ($overlap->candidates((int)$findatime->duration, 0, 0, true) as $candidate) {
             $counts[$candidate['timestart']] = $candidate;
         }
+        $blocked = $overlap->blocked();
         $format = get_string('strftimedaydatetime', 'langconfig');
         $options = [];
         $now = time();
@@ -110,6 +111,10 @@ class confirm_meeting extends \core_form\dynamic_form {
                 'members' => count($members),
             ];
             $options[$start] = get_string('timeoption', 'findatime', $a);
+            // Allowed, but flagged: a necessary participant who answered cannot make the whole meeting.
+            if (array_intersect_key($blocked, array_flip($slots->span($start, (int)$findatime->duration)))) {
+                $options[$start] = get_string('timeoptionblocked', 'findatime', $options[$start]);
+            }
         }
         return $options;
     }

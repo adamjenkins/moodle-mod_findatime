@@ -30,7 +30,8 @@
     * uniqid - Unique id of the grid container.
     * cmid - Course module id.
     * days - Column headings: key, label (full date), weekday, date.
-    * rows - Rows: key, label, hourstart, cells (isslot, slotstart, label, status, statuslabel, row, col).
+    * rows - Rows: key, label, hourstart, cells (isslot, slotstart, label, title, status, statuslabel, blocked, row, col).
+      A blocked cell (a necessary participant cannot make it, and the activity greys such times out) cannot be marked.
     * hasslots - Whether there are any slots.
     * allowifneedbe - Whether "if need be" can be chosen.
     * lastsaved - When the availability was last saved, or empty.
@@ -45,7 +46,8 @@
         "rows": [
             {"key": "540:0", "label": "09:00", "hourstart": false, "cells": [
                 {"isslot": true, "slotstart": 1791190800, "label": "Monday, 5 October 2026, 9:00 AM",
-                 "status": 1, "statuslabel": "Available", "row": 0, "col": 0}
+                 "title": "Monday, 5 October 2026, 9:00 AM - 9:30 AM", "status": 1, "statuslabel": "Available",
+                 "blocked": false, "row": 0, "col": 0}
             ]},
             {"key": "570:0", "label": "09:30", "hourstart": false, "cells": [
                 {"isslot": false, "row": 1, "col": 0}
@@ -114,6 +116,8 @@
                     {{#isslot}}
                     <td class="mod-findatime-cell" tabindex="-1" data-slot="{{slotstart}}"
                         data-status="{{status}}" data-row="{{row}}" data-col="{{col}}" data-label="{{label}}"
+                        title="{{title}}{{#blocked}} ({{#str}}requiredblockedshort, mod_findatime{{/str}}){{/blocked}}"
+                        {{#blocked}}data-blocked="1" aria-disabled="true"{{/blocked}}
                         aria-label="{{label}}: {{statuslabel}}"></td>
                     {{/isslot}}
                     {{^isslot}}

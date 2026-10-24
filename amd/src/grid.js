@@ -140,7 +140,8 @@ class Grid {
      * @param {number} status 0, 1 or 2.
      */
     setStatus(cell, status) {
-        if (parseInt(cell.dataset.status, 10) === status) {
+        // Greyed out: a necessary participant cannot make this time.
+        if (cell.dataset.blocked === '1' || parseInt(cell.dataset.status, 10) === status) {
             return;
         }
         cell.dataset.status = String(status);

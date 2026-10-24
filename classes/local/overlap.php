@@ -34,6 +34,8 @@ class overlap {
     protected $memberids;
     /** @var array userid => [slotstart => status], members only. */
     protected $statuses;
+    /** @var int[] Necessary participants among the members. */
+    protected $requiredids;
 
     /**
      * Constructor.
@@ -41,10 +43,12 @@ class overlap {
      * @param slots $slots The slot set.
      * @param int[] $memberids The group's members whose availability counts.
      * @param array $statuses userid => [slotstart => status]; non-members are ignored.
+     * @param int[] $requiredids Necessary participants; only those who are members count.
      */
-    public function __construct(slots $slots, array $memberids, array $statuses) {
+    public function __construct(slots $slots, array $memberids, array $statuses, array $requiredids = []) {
         $this->slots = $slots;
         $this->memberids = array_values(array_map('intval', $memberids));
+        $this->requiredids = array_values(array_intersect(array_map('intval', $requiredids), $this->memberids));
         $this->statuses = [];
         foreach ($this->memberids as $userid) {
             if (array_key_exists($userid, $statuses)) {
@@ -66,7 +70,25 @@ class overlap {
         foreach ($statuses as $userid => $userstatuses) {
             $statuses[$userid] = availability::effective($findatime, $userstatuses);
         }
-        return new self($slots ?? new slots($findatime), $memberids, $statuses);
+        return new self($slots ?? new slots($findatime), $memberids, $statuses, required::get_userids($findatime->id));
+    }
+
+    /**
+     * The necessary participants among the members.
+     *
+     * @return int[]
+     */
+    public function required_ids(): array {
+        return $this->requiredids;
+    }
+
+    /**
+     * Slots ruled out because a necessary participant who has answered is unavailable then.
+     *
+     * @return array slotstart => int[] those necessary participants.
+     */
+    public function blocked(): array {
+        return required::blocked($this->slots, $this->requiredids, $this->statuses);
     }
 
     /**
@@ -128,9 +150,11 @@ class overlap {
      * @param int $duration Meeting length in minutes.
      * @param int $after Only starts later than this timestamp (0 = no limit).
      * @param int $limit Maximum number of candidates (0 = all).
-     * @return array List of ['timestart' => int, 'available' => int[], 'ifneedbe' => int[]].
+     * @param bool $includeblocked Also return times a necessary participant who has answered cannot make
+     *     (listed in their 'missing'); by default they are left out.
+     * @return array List of ['timestart' => int, 'available' => int[], 'ifneedbe' => int[], 'missing' => int[]].
      */
-    public function candidates(int $duration, int $after = 0, int $limit = 5): array {
+    public function candidates(int $duration, int $after = 0, int $limit = 5, bool $includeblocked = false): array {
         $candidates = [];
         foreach ($this->slots->get_starts() as $start) {
             if ($start <= $after) {
@@ -161,8 +185,19 @@ class overlap {
                     $ifneedbe[] = $userid;
                 }
             }
-            if ($available || $ifneedbe) {
-                $candidates[] = ['timestart' => $start, 'available' => $available, 'ifneedbe' => $ifneedbe];
+            // Necessary participants who answered but cannot come for the whole meeting.
+            $missing = [];
+            foreach ($this->requiredids as $userid) {
+                if (
+                    array_key_exists($userid, $this->statuses) && !in_array($userid, $available, true)
+                        && !in_array($userid, $ifneedbe, true)
+                ) {
+                    $missing[] = $userid;
+                }
+            }
+            if (($available || $ifneedbe) && ($includeblocked || !$missing)) {
+                $candidates[] = ['timestart' => $start, 'available' => $available, 'ifneedbe' => $ifneedbe,
+                    'missing' => $missing];
             }
         }
         usort($candidates, function (array $a, array $b): int {

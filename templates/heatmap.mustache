@@ -23,7 +23,8 @@
     * mod-findatime-heat
 
     Data attributes required for JS:
-    * data-region="mod-findatime-heatmap", data-cmid, data-groupid, data-slotdata, data-slot, data-row, data-col,
+    * data-region="mod-findatime-heatmap", data-cmid, data-groupid, data-slotdata, data-blockeddata, data-greyrequired,
+      data-responded, data-slot, data-row, data-col, data-title, data-blocked,
       data-region="heatdetail", data-region="candidates", data-region="responded"
 
     Context variables required for this template:
@@ -33,9 +34,13 @@
     * membercount - Members of the group.
     * respondedcount - Members who have submitted availability.
     * haspending, pendinglist - Members who have not.
-    * days, rows - Grid layout; cells carry available, ifneedbe, level, hasany, summary.
+    * days, rows - Grid layout; cells carry available, ifneedbe, level, hasany, summary, title (start - end), blocked.
     * hasslots - Whether there are slots.
     * slotdata - JSON list of per-slot names.
+    * blockeddata - JSON list of slots a necessary participant cannot make, with their names.
+    * greyrequired - Whether those slots are greyed out.
+    * hasrequired, requiredlist - Necessary participants among the members.
+    * legend - Colour legend: level, label.
     * candidateslist - Context of mod_findatime/candidates.
 
     Example context (json):
@@ -50,19 +55,27 @@
         "days": [{"key": "2026-10-05", "label": "Monday, 5 October 2026", "weekday": "Mon", "date": "05 Oct"}],
         "rows": [{"key": "540:0", "label": "09:00", "hourstart": false, "cells": [
             {"isslot": true, "slotstart": 1791190800, "label": "Monday, 5 October 2026, 9:00 AM", "available": 1,
-             "ifneedbe": 0, "level": 2, "hasany": true, "summary": "1 of 2 available", "row": 0, "col": 0}
+             "ifneedbe": 0, "level": 4, "hasany": true, "summary": "1 of 2 available", "row": 0, "col": 0,
+             "title": "Monday, 5 October 2026, 9:00 AM - 9:30 AM", "blocked": false}
         ]}],
         "hasslots": true,
         "slotdata": "[]",
+        "blockeddata": "[]",
+        "greyrequired": false,
+        "hasrequired": true,
+        "requiredlist": "Alice London",
+        "legend": [{"level": 1, "label": "Nobody"}, {"level": 6, "label": "Everybody"}],
         "candidateslist": {"groupid": 3, "membercount": 2, "canconfirm": false, "hascandidates": false, "candidates": []}
     }
 }}
 <div id="{{uniqid}}" class="mod-findatime-heatmap" data-region="mod-findatime-heatmap" data-cmid="{{cmid}}"
-    data-groupid="{{groupid}}" data-membercount="{{membercount}}" data-slotdata="{{slotdata}}">
+    data-groupid="{{groupid}}" data-membercount="{{membercount}}" data-responded="{{respondedcount}}"
+    data-slotdata="{{slotdata}}" data-blockeddata="{{blockeddata}}" data-greyrequired="{{#greyrequired}}1{{/greyrequired}}{{^greyrequired}}0{{/greyrequired}}">
     <p data-region="responded">
         {{#str}}respondedcount, mod_findatime, {"responded": {{respondedcount}}, "members": {{membercount}} }{{/str}}
         {{#haspending}}<span class="mod-findatime-pending">{{#str}}pendinglist, mod_findatime, {{pendinglist}}{{/str}}</span>{{/haspending}}
     </p>
+    {{#hasrequired}}<p class="mod-findatime-required">{{#str}}requiredlist, mod_findatime, {{requiredlist}}{{/str}}</p>{{/hasrequired}}
     {{#hasslots}}
     <div class="mod-findatime-heatlayout">
         <div class="mod-findatime-scroll">
@@ -86,6 +99,7 @@
                         {{#isslot}}
                         <td class="mod-findatime-heat" tabindex="-1" data-slot="{{slotstart}}"
                             data-row="{{row}}" data-col="{{col}}" data-level="{{level}}" data-label="{{label}}"
+                            data-title="{{title}}" title="{{title}}" data-blocked="{{#blocked}}1{{/blocked}}{{^blocked}}0{{/blocked}}"
                             aria-label="{{label}}: {{summary}}">{{#hasany}}{{available}}{{#ifneedbe}}<span class="mod-findatime-plus">+{{ifneedbe}}</span>{{/ifneedbe}}{{/hasany}}</td>
                         {{/isslot}}
                         {{^isslot}}
@@ -96,6 +110,16 @@
                     {{/rows}}
                 </tbody>
             </table>
+            <ul class="mod-findatime-legend list-unstyled d-flex flex-wrap mt-2" aria-label="{{#str}}legend, mod_findatime{{/str}}">
+                {{#legend}}
+                <li class="mod-findatime-legenditem"><span class="mod-findatime-swatch mod-findatime-heatswatch" data-level="{{level}}"
+                    aria-hidden="true"></span>{{label}}</li>
+                {{/legend}}
+                {{#greyrequired}}
+                <li class="mod-findatime-legenditem"><span class="mod-findatime-swatch mod-findatime-heatswatch" data-level="0"
+                    data-blocked="1" aria-hidden="true"></span>{{#str}}legendblocked, mod_findatime{{/str}}</li>
+                {{/greyrequired}}
+            </ul>
         </div>
         <div class="mod-findatime-heatside">
             <p class="mod-findatime-help" id="{{uniqid}}-help">{{#str}}heathelp, mod_findatime{{/str}}</p>

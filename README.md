@@ -21,6 +21,12 @@ the group's shared availability decides the time.
   enabled, confirms a time and an optional location or link. This creates a group calendar event and
   sends a notification to the group's members. The meeting can be moved or cancelled; the calendar
   event follows.
+- **Colour-coded overlap map**: from red (nobody can come) through orange and yellow to green
+  (everybody), with a colour key. Each block shows its start and end time as a tooltip; clicking a
+  block keeps its details shown (click it again to release, or another block to move).
+- **Necessary participants**: the meeting time must suit them. Once they have answered, the times they
+  cannot make are left out of the best times and are never chosen automatically; optionally they are
+  also greyed out on the map and in the other members' grids.
 - **RSVP date and reminders**: optionally, members must answer by a "Respond by" date. After it the
   grid is read-only and only the answers given by then count when the time is set, by hand or
   automatically. Reminders can be sent 1 hour, 1, 2 or 3 days or a week before it to the members who
@@ -66,7 +72,9 @@ Copy the plugin to `mod/findatime` (on Moodle 5.1 and later: `public/mod/findati
 | Meeting length | A whole number of slots |
 | Allow "if need be" answers | Offer the third status |
 | Any group member may confirm | Let members confirm or cancel for their own group |
-| Respond by | Answers are final at this time; it is also the due date shown in the timeline |
+| Respond by | Answers are final at this time; shown in large type above the description, and as the due date in the timeline |
+| Necessary participants | Members whose availability the meeting time must respect |
+| Grey out times that necessary participants cannot make | Show those times greyed out, and stop members marking them |
 | Reminders | When to remind members who have not answered, before the RSVP date |
 | Confirm automatically at | When to confirm the most popular time for groups without a meeting |
 

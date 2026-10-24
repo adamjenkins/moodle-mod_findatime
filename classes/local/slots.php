@@ -356,6 +356,11 @@ class slots {
             $cell = [
                 'slotstart' => $start,
                 'label' => userdate($start, $fullformat, $tzname),
+                // Tooltip: the block's start and end, e.g. "Monday, 5 October 2026, 9:00 AM - 9:30 AM".
+                'title' => get_string('slotrange', 'findatime', [
+                    'start' => userdate($start, $fullformat, $tzname),
+                    'end' => userdate($start + $this->step, $timeformat, $tzname),
+                ]),
             ];
             if ($cellcallback) {
                 $cell = array_merge($cell, $cellcallback($start));

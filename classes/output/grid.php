@@ -16,7 +16,9 @@
 
 namespace mod_findatime\output;
 
+use mod_findatime\local\access;
 use mod_findatime\local\availability;
+use mod_findatime\local\required;
 use mod_findatime\local\slots;
 use renderer_base;
 
@@ -74,9 +76,15 @@ class grid implements \renderable, \templatable {
             availability::get_user_statuses($this->findatime->id, $this->userid)
         );
         $labels = self::status_labels();
-        $layout = $slots->layout(\core_date::get_user_timezone_object(), function (int $start) use ($statuses, $labels): array {
+        // Times a necessary participant of the user's groups cannot make, when the activity greys them out.
+        $blocked = array_flip(required::blocked_for_user(new access($this->findatime, $this->cm), $this->userid));
+        $layout = $slots->layout(\core_date::get_user_timezone_object(), function (int $start) use (
+            $statuses,
+            $labels,
+            $blocked
+        ): array {
             $status = $statuses[$start] ?? 0;
-            return ['status' => $status, 'statuslabel' => $labels[$status]];
+            return ['status' => $status, 'statuslabel' => $labels[$status], 'blocked' => isset($blocked[$start])];
         });
         $response = availability::get_response($this->findatime->id, $this->userid);
         return [

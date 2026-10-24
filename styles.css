@@ -154,24 +154,90 @@
     text-align: center;
 }
 
-.path-mod-findatime .mod-findatime-heat[data-level="1"] {
-    background-color: #d1e7dd;
-}
-
-.path-mod-findatime .mod-findatime-heat[data-level="2"] {
-    background-color: #a3cfbb;
-}
-
-.path-mod-findatime .mod-findatime-heat[data-level="3"] {
-    border-color: #0f5132;
-    background-color: #198754;
+/* Heat colours, red (nobody can come) through orange, yellow and green to dark green (everybody);
+   each pairs with a text colour of at least 4.5:1 contrast, and the count is always printed too. */
+.path-mod-findatime .mod-findatime-heat[data-level="1"],
+.path-mod-findatime .mod-findatime-heatswatch[data-level="1"] {
+    border-color: #8e1c1c;
+    background-color: #c62828;
     color: #fff;
 }
 
-.path-mod-findatime .mod-findatime-heat[data-level="4"] {
-    border-color: #051b11;
-    background-color: #0f5132;
+.path-mod-findatime .mod-findatime-heat[data-level="2"],
+.path-mod-findatime .mod-findatime-heatswatch[data-level="2"] {
+    border-color: #b35900;
+    background-color: #f57c00;
+    color: #212529;
+}
+
+.path-mod-findatime .mod-findatime-heat[data-level="3"],
+.path-mod-findatime .mod-findatime-heatswatch[data-level="3"] {
+    border-color: #c9a227;
+    background-color: #ffd54f;
+    color: #212529;
+}
+
+.path-mod-findatime .mod-findatime-heat[data-level="4"],
+.path-mod-findatime .mod-findatime-heatswatch[data-level="4"] {
+    border-color: #8f9726;
+    background-color: #c0ca33;
+    color: #212529;
+}
+
+.path-mod-findatime .mod-findatime-heat[data-level="5"],
+.path-mod-findatime .mod-findatime-heatswatch[data-level="5"] {
+    border-color: #3f8a43;
+    background-color: #66bb6a;
+    color: #212529;
+}
+
+.path-mod-findatime .mod-findatime-heat[data-level="6"],
+.path-mod-findatime .mod-findatime-heatswatch[data-level="6"] {
+    border-color: #0d3310;
+    background-color: #1b5e20;
     color: #fff;
+}
+
+/* Times a necessary participant cannot make, when the activity greys them out. */
+.path-mod-findatime .mod-findatime-heat[data-blocked="1"],
+.path-mod-findatime .mod-findatime-heatswatch[data-blocked="1"],
+.path-mod-findatime .mod-findatime-cell[data-blocked="1"] {
+    border-color: #adb5bd;
+    background: repeating-linear-gradient(45deg, #dee2e6, #dee2e6 4px, #f1f3f5 4px, #f1f3f5 8px);
+    color: #495057;
+    cursor: not-allowed;
+}
+
+/* The block the detail panel is pinned to. */
+.path-mod-findatime .mod-findatime-heat.mod-findatime-locked {
+    outline: 3px solid #212529;
+    outline-offset: 1px;
+}
+
+.path-mod-findatime .mod-findatime-heat {
+    cursor: pointer;
+}
+
+.path-mod-findatime .mod-findatime-detail-locked {
+    border-color: #212529;
+    border-width: 2px;
+}
+
+.path-mod-findatime .mod-findatime-legend {
+    gap: 0.25rem 1rem;
+    font-size: 0.85rem;
+}
+
+.path-mod-findatime .mod-findatime-heatswatch {
+    width: 1.25rem;
+    border: 1px solid #ced4da;
+    background-color: #f1f3f5;
+}
+
+.path-mod-findatime .mod-findatime-rsvpbanner {
+    margin: 0.75rem 0;
+    font-size: 1.5rem;
+    font-weight: bold;
 }
 
 .path-mod-findatime .mod-findatime-plus {

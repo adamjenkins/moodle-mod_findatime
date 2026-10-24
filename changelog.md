@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Reminders before the RSVP date to members who have not answered.
 - An optional message and a "Notify group members" choice when confirming, and "Send meeting details".
 - Calendar entries of meetings that have taken place stay in the course calendar when the activity is deleted.
+- Necessary participants: automatic scheduling and the best times never use a time they cannot make; optionally
+  such times are greyed out.
+- The RSVP date in large type above the description.
+- Start and end times as tooltips on the maps, and click to keep a time's details shown.
+
+### Changed
+- The overlap map is colour-coded from red (nobody) to dark green (everybody), with a colour key.
 
 ## [0.1.3] - 2026-10-04
 

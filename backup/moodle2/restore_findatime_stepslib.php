@@ -53,6 +53,7 @@ class restore_findatime_activity_structure_step extends restore_activity_structu
             $paths[] = new restore_path_element('findatime_response', '/activity/findatime/responses/response');
             $paths[] = new restore_path_element('findatime_slot', '/activity/findatime/responses/response/slots/slot');
             $paths[] = new restore_path_element('findatime_meeting', '/activity/findatime/meetings/meeting');
+            $paths[] = new restore_path_element('findatime_required', '/activity/findatime/requireds/required');
         }
         return $this->prepare_activity_structure($paths);
     }
@@ -91,6 +92,7 @@ class restore_findatime_activity_structure_step extends restore_activity_structu
         $data->allowifneedbe = empty($data->allowifneedbe) ? 0 : 1;
         $data->memberconfirm = empty($data->memberconfirm) ? 0 : 1;
         $data->completionsubmit = empty($data->completionsubmit) ? 0 : 1;
+        $data->greyrequired = empty($data->greyrequired) ? 0 : 1;
         // The automatic confirmation counts as done only if it ran (user data, so its meetings came along)
         // and its time is still in the past after the date shift; otherwise it runs again.
         $data->autoconfirmdone = ($this->get_setting_value('userinfo') && !empty($data->autoconfirmdone)
@@ -175,6 +177,25 @@ class restore_findatime_activity_structure_step extends restore_activity_structu
         }
         $newid = $DB->insert_record('findatime_meetings', $data);
         $this->set_mapping('findatime_meeting', $oldid, $newid);
+    }
+
+    /**
+     * A necessary participant.
+     *
+     * @param array $data Data.
+     */
+    protected function process_findatime_required($data) {
+        global $DB;
+        $data = (object)$data;
+        $data->findatimeid = $this->get_new_parentid('findatime');
+        $data->userid = $this->get_mappingid('user', $data->userid);
+        if (
+            !$data->userid
+            || $DB->record_exists('findatime_required', ['findatimeid' => $data->findatimeid, 'userid' => $data->userid])
+        ) {
+            return;
+        }
+        $DB->insert_record('findatime_required', $data);
     }
 
     /**

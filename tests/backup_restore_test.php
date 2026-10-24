@@ -79,6 +79,7 @@ final class backup_restore_test extends \advanced_testcase {
         $starts = (new slots($this->findatime))->get_starts();
         availability::save($this->findatime, $this->students['a']->id, [$starts[0] => 1, $starts[1] => 2]);
         availability::save($this->findatime, $this->students['b']->id, []);
+        \mod_findatime\local\required::set_userids($this->findatime->id, [$this->students['a']->id]);
         $this->redirectMessages();
         $cm = get_fast_modinfo($this->course)->get_cm($module->cmid);
         meetings::confirm(new access($this->findatime, $cm), $this->group->id, $starts[0], 'Room 1', $this->students['a']->id);
@@ -154,6 +155,7 @@ final class backup_restore_test extends \advanced_testcase {
             availability::get_statuses($restored->id, [$this->students['a']->id, $this->students['b']->id])
         );
         $this->assertTrue(availability::has_responded($restored->id, $this->students['b']->id));
+        $this->assertSame([(int)$this->students['a']->id], \mod_findatime\local\required::get_userids($restored->id));
 
         $newgroupid = (int)$DB->get_field('groups', 'id', ['courseid' => $restored->course, 'name' => 'Team']);
         $meeting = meetings::get_current($restored->id, $newgroupid);

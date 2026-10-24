@@ -27,19 +27,31 @@ import Templates from 'core/templates';
 import {getString, getStrings} from 'core/str';
 import {SAVED_EVENT} from 'mod_findatime/grid';
 
+/** @var {number} Colour levels once anybody has answered, as \mod_findatime\output\heatmap::LEVELS. */
+const LEVELS = 6;
+
 /**
- * Heat level (0-4), the same formula as \mod_findatime\output\heatmap::level().
+ * Heat level, the same formula as \mod_findatime\output\heatmap::level(): 0 while nobody has
+ * answered, then 1 (nobody available, red) to LEVELS (everybody available, dark green).
  *
  * @param {number} available Members available.
  * @param {number} ifneedbe Members available if need be.
  * @param {number} members Group size.
+ * @param {number} responded Members who have answered.
  * @returns {number}
  */
-const level = (available, ifneedbe, members) => {
-    if (members <= 0 || available + ifneedbe === 0) {
+const level = (available, ifneedbe, members, responded) => {
+    if (members <= 0 || responded <= 0) {
         return 0;
     }
-    return Math.max(1, Math.min(4, Math.ceil(((available + ifneedbe / 2) / members) * 4)));
+    const share = (available + ifneedbe / 2) / members;
+    if (share <= 0) {
+        return 1;
+    }
+    if (share >= 1) {
+        return LEVELS;
+    }
+    return 2 + Math.min(3, Math.floor(share * 4));
 };
 
 /**
@@ -58,10 +70,14 @@ class Heatmap {
         this.cmid = parseInt(root.dataset.cmid, 10);
         this.groupid = parseInt(root.dataset.groupid, 10);
         this.members = parseInt(root.dataset.membercount, 10);
+        this.responded = parseInt(root.dataset.responded, 10);
+        this.greyRequired = root.dataset.greyrequired === '1';
+        this.locked = null;
         this.detail = root.querySelector('[data-region="heatdetail"]');
         this.cells = Array.from(root.querySelectorAll('.mod-findatime-heat'));
         this.positions = new Map(this.cells.map((c) => [c.dataset.row + ':' + c.dataset.col, c]));
         this.setSlotData(JSON.parse(root.dataset.slotdata || '[]'));
+        this.setBlocked(JSON.parse(root.dataset.blockeddata || '[]'));
         if (this.cells.length) {
             this.cells[0].tabIndex = 0;
         }
@@ -78,6 +94,15 @@ class Heatmap {
     }
 
     /**
+     * Index the slots a necessary participant cannot make.
+     *
+     * @param {Array} blocked List of {slotstart, names} from get_overlap.
+     */
+    setBlocked(blocked) {
+        this.blocked = new Map(blocked.map((b) => [String(b.slotstart), b.names]));
+    }
+
+    /**
      * Attach listeners.
      */
     bind() {
@@ -87,7 +112,7 @@ class Heatmap {
         }
         table.addEventListener('pointerover', (e) => {
             const cell = e.target.closest('.mod-findatime-heat');
-            if (cell) {
+            if (cell && !this.locked) {
                 this.showDetail(cell);
             }
         });
@@ -97,7 +122,15 @@ class Heatmap {
                 this.cells.forEach((c) => {
                     c.tabIndex = c === cell ? 0 : -1;
                 });
-                this.showDetail(cell);
+                if (!this.locked) {
+                    this.showDetail(cell);
+                }
+            }
+        });
+        table.addEventListener('click', (e) => {
+            const cell = e.target.closest('.mod-findatime-heat');
+            if (cell) {
+                this.toggleLock(cell);
             }
         });
         table.addEventListener('keydown', (e) => this.keyDown(e));
@@ -116,6 +149,11 @@ class Heatmap {
     keyDown(e) {
         const moves = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]};
         const cell = e.target.closest('.mod-findatime-heat');
+        if (cell && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            this.toggleLock(cell);
+            return;
+        }
         if (!cell || !moves[e.key]) {
             return;
         }
@@ -137,6 +175,27 @@ class Heatmap {
     }
 
     /**
+     * Pin the detail panel to a cell; the same cell again unpins it, another cell moves the pin.
+     *
+     * @param {HTMLElement} cell The clicked cell.
+     */
+    toggleLock(cell) {
+        if (this.locked) {
+            this.locked.classList.remove('mod-findatime-locked');
+            this.locked.setAttribute('aria-selected', 'false');
+        }
+        if (this.locked === cell) {
+            this.locked = null;
+            this.showDetail(cell);
+            return;
+        }
+        this.locked = cell;
+        cell.classList.add('mod-findatime-locked');
+        cell.setAttribute('aria-selected', 'true');
+        this.showDetail(cell);
+    }
+
+    /**
      * Show who is available at a cell's time.
      *
      * @param {HTMLElement} cell The cell.
@@ -144,9 +203,10 @@ class Heatmap {
     showDetail(cell) {
         const data = this.slotdata.get(cell.dataset.slot) || {availablenames: [], ifneedbenames: []};
         this.detail.textContent = '';
+        this.detail.classList.toggle('mod-findatime-detail-locked', this.locked === cell);
         const heading = document.createElement('p');
         const strong = document.createElement('strong');
-        strong.textContent = cell.dataset.label;
+        strong.textContent = cell.dataset.title || cell.dataset.label;
         heading.appendChild(strong);
         this.detail.appendChild(heading);
         const addLine = (label, names) => {
@@ -167,6 +227,14 @@ class Heatmap {
             line.textContent = this.strings.nobody;
             this.detail.appendChild(line);
         }
+        const blocked = this.blocked.get(cell.dataset.slot);
+        if (blocked && blocked.length) {
+            addLine(this.strings.requiredunavailable, blocked);
+        }
+        const hint = document.createElement('p');
+        hint.className = 'mb-0 small mod-findatime-lockhint';
+        hint.textContent = this.locked === cell ? this.strings.unpin : this.strings.pin;
+        this.detail.appendChild(hint);
     }
 
     /**
@@ -192,10 +260,17 @@ class Heatmap {
      */
     redraw(data) {
         this.members = data.membercount;
+        this.responded = data.respondedcount;
+        this.greyRequired = data.greyrequired;
         this.setSlotData(data.slots);
+        this.setBlocked(data.blocked);
+        if (this.locked) {
+            this.showDetail(this.locked);
+        }
         const summaries = this.cells.map((cell) => {
             const s = this.slotdata.get(cell.dataset.slot) || {available: 0, ifneedbe: 0};
-            cell.dataset.level = String(level(s.available, s.ifneedbe, this.members));
+            cell.dataset.level = String(level(s.available, s.ifneedbe, this.members, this.responded));
+            cell.dataset.blocked = this.greyRequired && this.blocked.has(cell.dataset.slot) ? '1' : '0';
             cell.textContent = '';
             if (s.available || s.ifneedbe) {
                 cell.appendChild(document.createTextNode(String(s.available)));
@@ -264,8 +339,11 @@ export const init = (id) => {
         {key: 'statusavailable', component: 'mod_findatime'},
         {key: 'statusifneedbe', component: 'mod_findatime'},
         {key: 'heatnobody', component: 'mod_findatime'},
+        {key: 'requiredunavailable', component: 'mod_findatime'},
+        {key: 'heatpin', component: 'mod_findatime'},
+        {key: 'heatunpin', component: 'mod_findatime'},
     ]).then((s) => {
-        new Heatmap(root, {available: s[0], ifneedbe: s[1], nobody: s[2]});
+        new Heatmap(root, {available: s[0], ifneedbe: s[1], nobody: s[2], requiredunavailable: s[3], pin: s[4], unpin: s[5]});
         return null;
     }).catch(Notification.exception);
 };

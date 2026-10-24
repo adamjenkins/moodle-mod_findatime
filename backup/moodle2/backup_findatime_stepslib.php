@@ -33,13 +33,15 @@ class backup_findatime_activity_structure_step extends backup_activity_structure
         $findatime = new backup_nested_element('findatime', ['id'], [
             'name', 'intro', 'introformat', 'timezone', 'datestart', 'dateend', 'daystartmins', 'dayendmins',
             'slotsize', 'duration', 'allowifneedbe', 'memberconfirm', 'autoconfirm', 'autoconfirmdone', 'rsvpby', 'reminders',
-            'reminderssent',
+            'reminderssent', 'greyrequired',
             'completionsubmit', 'timecreated', 'timemodified',
         ]);
         $responses = new backup_nested_element('responses');
         $response = new backup_nested_element('response', ['id'], ['userid', 'timecreated', 'timemodified']);
         $slots = new backup_nested_element('slots');
         $slot = new backup_nested_element('slot', ['id'], ['slotstart', 'status']);
+        $requireds = new backup_nested_element('requireds');
+        $required = new backup_nested_element('required', ['id'], ['userid']);
         $meetings = new backup_nested_element('meetings');
         $meeting = new backup_nested_element('meeting', ['id'], [
             'groupid', 'timestart', 'duration', 'location', 'status', 'source', 'usermodified', 'timenotified', 'timecreated',
@@ -50,6 +52,8 @@ class backup_findatime_activity_structure_step extends backup_activity_structure
         $responses->add_child($response);
         $response->add_child($slots);
         $slots->add_child($slot);
+        $findatime->add_child($requireds);
+        $requireds->add_child($required);
         $findatime->add_child($meetings);
         $meetings->add_child($meeting);
 
@@ -58,9 +62,11 @@ class backup_findatime_activity_structure_step extends backup_activity_structure
             $response->set_source_table('findatime_responses', ['findatimeid' => backup::VAR_PARENTID], 'id ASC');
             $slot->set_source_table('findatime_slots', ['responseid' => backup::VAR_PARENTID], 'id ASC');
             $meeting->set_source_table('findatime_meetings', ['findatimeid' => backup::VAR_PARENTID], 'id ASC');
+            $required->set_source_table('findatime_required', ['findatimeid' => backup::VAR_PARENTID], 'id ASC');
         }
 
         $response->annotate_ids('user', 'userid');
+        $required->annotate_ids('user', 'userid');
         $meeting->annotate_ids('user', 'usermodified');
         $meeting->annotate_ids('group', 'groupid');
         $findatime->annotate_files('mod_findatime', 'intro', null);

@@ -82,6 +82,8 @@ class get_overlap extends external_api {
             'membercount' => new external_value(PARAM_INT, 'Members whose availability counts'),
             'respondedcount' => new external_value(PARAM_INT, 'Members who have submitted availability'),
             'pendingnames' => self::names('Members who have not submitted availability'),
+            'requirednames' => self::names('Necessary participants among the members'),
+            'greyrequired' => new external_value(PARAM_BOOL, 'Whether times a necessary participant cannot make are greyed out'),
             'canconfirm' => new external_value(PARAM_BOOL, 'Whether the user may confirm a time for this group'),
             'slots' => new external_multiple_structure(new external_single_structure([
                 'slotstart' => new external_value(PARAM_INT, 'Slot start timestamp'),
@@ -90,6 +92,10 @@ class get_overlap extends external_api {
                 'availablenames' => self::names('Members available'),
                 'ifneedbenames' => self::names('Members available if need be'),
             ]), 'Slots where anybody is available; the others have nobody'),
+            'blocked' => new external_multiple_structure(new external_single_structure([
+                'slotstart' => new external_value(PARAM_INT, 'Slot start timestamp'),
+                'names' => self::names('Necessary participants who are unavailable then'),
+            ]), 'Slots a necessary participant who has answered cannot make'),
             'candidates' => new external_multiple_structure(new external_single_structure([
                 'timestart' => new external_value(PARAM_INT, 'Meeting start timestamp'),
                 'label' => new external_value(PARAM_TEXT, 'Start in the user\'s timezone'),

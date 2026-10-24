@@ -62,6 +62,7 @@ function findatime_add_instance($data, $mform = null) {
     $data->autoconfirmdone = 0;
     $data->id = $DB->insert_record('findatime', $data);
 
+    findatime_save_required($data);
     // The course module's instance field is not set yet, so nothing here may look the module up.
     \mod_findatime\local\calendar_sync::sync_instance($DB->get_record('findatime', ['id' => $data->id]));
 
@@ -101,6 +102,7 @@ function findatime_update_instance($data, $mform = null) {
         $data->reminderssent = '';
     }
     $DB->update_record('findatime', $data);
+    findatime_save_required($data);
 
     $findatime = $DB->get_record('findatime', ['id' => $data->id], '*', MUST_EXIST);
     \mod_findatime\local\calendar_sync::sync_instance($findatime);
@@ -127,6 +129,7 @@ function findatime_delete_instance($id) {
         return false;
     }
     \mod_findatime\local\availability::delete_for_instance($findatime->id);
+    \mod_findatime\local\required::delete_for_instance($findatime->id);
     // Meetings that have taken place stay in the calendar as ordinary group or course events; core
     // deletes the module's events only after this function returns.
     \mod_findatime\local\calendar_sync::keep_past_meetings($findatime);
@@ -405,4 +408,21 @@ function findatime_shift_instance(stdClass $findatime, int $days): void {
             ['id' => $meeting->id]
         );
     }
+}
+
+/**
+ * Store the necessary participants chosen in the settings form.
+ *
+ * Only users who may be chosen (enrolled and able to mark availability) are kept, whatever was submitted.
+ *
+ * @param stdClass $data Form data with id, course and requiredusers.
+ */
+function findatime_save_required(stdClass $data): void {
+    if (!property_exists($data, 'requiredusers')) {
+        // Not from the settings form (for example a generator or restore): leave them alone.
+        return;
+    }
+    $allowed = \mod_findatime\local\required::candidates(context_course::instance($data->course));
+    $userids = array_intersect(array_map('intval', (array)$data->requiredusers), array_keys($allowed));
+    \mod_findatime\local\required::set_userids((int)$data->id, $userids);
 }

@@ -85,7 +85,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
             return $item->get_name();
         }, $items);
         $this->assertEqualsCanonicalizing(
-            ['findatime_responses', 'findatime_slots', 'findatime_meetings', 'core_message'],
+            ['findatime_responses', 'findatime_slots', 'findatime_meetings', 'findatime_required', 'core_message'],
             $names
         );
     }

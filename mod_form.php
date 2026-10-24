@@ -117,6 +117,16 @@ class mod_findatime_mod_form extends moodleform_mod {
         $mform->hideIf('reminders', 'rsvpby[enabled]', 'notchecked');
 
         $mform->addElement('header', 'confirmationhdr', get_string('confirmation', 'findatime'));
+        $mform->addElement(
+            'autocomplete',
+            'requiredusers',
+            get_string('requiredusers', 'findatime'),
+            \mod_findatime\local\required::candidates($this->context),
+            ['multiple' => true, 'noselectionstring' => get_string('norequiredusers', 'findatime')]
+        );
+        $mform->addHelpButton('requiredusers', 'requiredusers', 'findatime');
+        $mform->addElement('advcheckbox', 'greyrequired', get_string('greyrequired', 'findatime'));
+        $mform->addHelpButton('greyrequired', 'greyrequired', 'findatime');
         $mform->addElement('advcheckbox', 'memberconfirm', get_string('memberconfirm', 'findatime'));
         $mform->addHelpButton('memberconfirm', 'memberconfirm', 'findatime');
         $mform->addElement(
@@ -159,6 +169,9 @@ class mod_findatime_mod_form extends moodleform_mod {
             $defaultvalues['datestart'] = slots::convert_civil_midnight((int)$defaultvalues['datestart'], $reftz, $usertz);
             $defaultvalues['dateend'] = slots::convert_civil_midnight((int)$defaultvalues['dateend'], $reftz, $usertz);
         }
+        if (!empty($this->_instance)) {
+            $defaultvalues['requiredusers'] = \mod_findatime\local\required::get_userids((int)$this->_instance);
+        }
         if (isset($defaultvalues['reminders']) && !is_array($defaultvalues['reminders'])) {
             $defaultvalues['reminders'] = \mod_findatime\local\reminders::parse((string)$defaultvalues['reminders']);
         }
@@ -180,6 +193,10 @@ class mod_findatime_mod_form extends moodleform_mod {
         }
         if (empty($data->rsvpby)) {
             $data->rsvpby = 0;
+        }
+        // An autocomplete with nothing selected submits nothing: that means "no necessary participants".
+        if (!isset($data->requiredusers)) {
+            $data->requiredusers = [];
         }
         // Reminders only make sense before an RSVP date.
         $data->reminders = $data->rsvpby ? \mod_findatime\local\reminders::format((array)($data->reminders ?? [])) : '';
