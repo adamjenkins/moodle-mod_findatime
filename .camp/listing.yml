@@ -2,16 +2,17 @@
 # Edit freely and commit; camp ingests this file at each tagged release.
 # Schema: https://camp-registry.org/schema/listing.schema.json
 name: mod_findatime
-summary: 'A Moodle activity where group members mark their availability on a time grid, see a colour-coded overlap map, and confirm a meeting time.'
+summary: 'A Moodle activity where participants mark their availability on a time grid, see a colour-coded overlap map, and confirm a meeting time.'
 description: |
-  Each member of a course group marks when they are available, if need be,
-  or unavailable on a time grid shown in their own timezone. A colour-coded
-  map shows the group's overlap and the best meeting times, with tooltips and
-  details that stay shown on click. A teacher, or any member if allowed,
-  confirms a time; this creates a group calendar event and notifies the
-  members. Necessary participants, a respond-by date with reminders, and
-  automatic confirmation of the most popular time help groups decide. For
-  teachers coordinating group projects, tutorials or study groups.
+  Everyone taking part marks when they are available, if need be, or
+  unavailable on a time grid shown in their own timezone. A colour-coded map
+  shows where their availability overlaps and the best meeting times. A
+  teacher, or any participant if allowed, confirms a time; this creates a
+  calendar event and notifies everyone. Especially useful for group work
+  (with separate groups, each group finds its own time), and equally for a
+  whole course or for teachers planning together. Necessary participants, a
+  respond-by date with reminders, and automatic confirmation of the most
+  popular time help people decide.
 labels:
   # Required disclosure labels — pick all that apply (RFC §4.7):
   #   fully-free | freemium | paid-service | external-account

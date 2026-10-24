@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Changed
 - On the overlap map, times when every member is available (not "if need be") are blue instead of dark green, so
   they stand out from the greens.
+- The activity's help text, README and listing describe its three uses: group work (especially with separate groups),
+  a whole course, and teachers planning together.
 
 ## [0.2.0] - 2026-10-24
 

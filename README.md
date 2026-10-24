@@ -1,9 +1,21 @@
 # Find a time (mod_findatime)
 
-A Moodle activity that helps the members of a course group agree on a meeting time. Each member
-marks when they are available on a time grid, everyone in the group sees where their availability
-overlaps, and a teacher (or, if allowed, any group member) confirms a time. The confirmed meeting
-goes into the group's calendar and the members are notified.
+A Moodle activity that helps people agree on a meeting time. Everyone taking part marks when they
+are available on a time grid, they all see where their availability overlaps, and a teacher (or, if
+allowed, any participant) confirms a time. The confirmed meeting goes into the calendar and everyone
+is notified.
+
+It is built to be especially useful for group work, but it is not only for groups:
+
+- **Group work**: with the group mode set to *separate groups*, every project team, study group or
+  tutorial group finds its own time and sees only its own members, and teachers follow all groups on
+  one overview page.
+- **A whole course**: with no groups, the class finds one time together (a review session, a visit,
+  an online meeting with a guest speaker).
+- **Teachers planning together**: in a staff course where colleagues are enrolled as participants, or
+  by allowing the teacher roles the "Mark own availability" (`mod/findatime:respond`) capability in
+  the activity's permissions, teachers find a time for a department meeting, a moderation session or
+  co-teaching.
 
 It is not a replacement for the Scheduler activity, where teachers offer appointment slots: here
 the group's shared availability decides the time.

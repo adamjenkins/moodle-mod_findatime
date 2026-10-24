@@ -136,7 +136,9 @@ $string['messagersvpremindersubject'] = 'Reminder: mark your availability for {$
 $string['messagetomembers'] = 'Message to group members';
 $string['messagetomembers_help'] = 'An optional note sent with the meeting details, for example what to prepare or how to join.';
 $string['modulename'] = 'Find a time';
-$string['modulename_help'] = 'The Find a time activity helps members of a group agree on a meeting time. Each member marks when they are available on a time grid, everyone in the group sees where their availability overlaps, and a teacher or group member confirms a time. The confirmed meeting appears in the group\'s calendar and members are notified.';
+$string['modulename_help'] = 'The Find a time activity helps people agree on a meeting time. Everyone taking part marks when they are available on a time grid and sees where their availability overlaps, and a teacher (or, if allowed, a participant) confirms a time. The confirmed meeting appears in the calendar and everyone is notified.
+
+Use it for a whole course, for group work (with separate groups, each group finds its own time and sees only its own members), or for teachers planning together: in a staff course, or by allowing the teacher roles the "Mark own availability" capability in the activity.';
 $string['modulenameplural'] = 'Find a time activities';
 $string['needsjs'] = 'Marking availability needs JavaScript.';
 $string['nocandidates'] = 'No time suits anybody yet.';

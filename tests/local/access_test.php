@@ -96,6 +96,24 @@ final class access_test extends \advanced_testcase {
     }
 
     /**
+     * Teachers finding a time among themselves: once their roles may mark availability in the activity,
+     * they take part like anybody else and the whole course is one pool.
+     */
+    public function test_teachers_collaborate(): void {
+        global $DB;
+        [$access, $u] = $this->scenario(NOGROUPS);
+        $context = $access->get_context();
+        foreach (['editingteacher', 'teacher'] as $shortname) {
+            $roleid = (int)$DB->get_field('role', 'id', ['shortname' => $shortname], MUST_EXIST);
+            role_change_permission($roleid, $context, 'mod/findatime:respond', CAP_ALLOW);
+        }
+        $this->assertTrue($access->can_respond($u['editingteacher']->id));
+        $this->assertTrue($access->can_respond($u['teacher']->id));
+        $this->assertCount(5, $access->members(0));
+        $this->assertTrue($access->can_confirm(0, $u['editingteacher']->id));
+    }
+
+    /**
      * The confirm capability works for own groups, or any group with access to all groups.
      */
     public function test_can_confirm_capability(): void {
