@@ -2,14 +2,16 @@
 # Edit freely and commit; camp ingests this file at each tagged release.
 # Schema: https://camp-registry.org/schema/listing.schema.json
 name: mod_findatime
-summary: 'A Moodle activity where group members mark their availability on a time grid, see where it overlaps, and confirm a meeting time.'
+summary: 'A Moodle activity where group members mark their availability on a time grid, see a colour-coded overlap map, and confirm a meeting time.'
 description: |
   Each member of a course group marks when they are available, if need be,
-  or unavailable on a time grid shown in their own timezone. A heatmap shows
-  the group's overlap and the best meeting times. A teacher, or any member if
-  allowed, confirms a time; this creates a group calendar event and notifies
-  the members, and unconfirmed groups can be confirmed automatically at a set
-  time. For teachers coordinating group projects, tutorials or study groups.
+  or unavailable on a time grid shown in their own timezone. A colour-coded
+  map shows the group's overlap and the best meeting times, with tooltips and
+  details that stay shown on click. A teacher, or any member if allowed,
+  confirms a time; this creates a group calendar event and notifies the
+  members. Necessary participants, a respond-by date with reminders, and
+  automatic confirmation of the most popular time help groups decide. For
+  teachers coordinating group projects, tutorials or study groups.
 labels:
   # Required disclosure labels — pick all that apply (RFC §4.7):
   #   fully-free | freemium | paid-service | external-account
@@ -17,21 +19,25 @@ labels:
   - fully-free
 screenshots:
   - path: .camp/screenshots/01-mark-availability.png
-    caption: 'A student marks her availability for the week: Available (green ✓) and If need be (yellow ?), saved automatically.'
+    caption: 'A student''s view: the Respond by date in large type above the description, then the availability grid.'
   - path: .camp/screenshots/02-group-overlap.png
-    caption: 'The group overlap heatmap for Team Aurora, with the names of who is free at the pointed time and the best meeting times. "4 of 5 have answered", with who has not.'
+    caption: 'The colour-coded group overlap, with one time clicked to keep its details shown, and the group''s best times.'
   - path: .camp/screenshots/03-teacher-best-times.png
-    caption: 'The teacher''s view of a group: the same heatmap with a "Confirm this time" button on each of the best times.'
+    caption: 'The teacher''s view of a group: the map with a necessary participant''s times greyed out, and Confirm buttons.'
   - path: .camp/screenshots/04-confirm-time.png
-    caption: Confirming a time, with an optional location or online meeting link.
+    caption: 'Confirming a time, with a location or online meeting link, a notification and a message to the group.'
   - path: .camp/screenshots/05-confirmed-meeting.png
-    caption: A student of Team Borealis sees the confirmed meeting, its location, who confirmed it, and a link to the calendar.
-  - path: .camp/screenshots/06-teacher-overview.png
-    caption: 'The overview of all groups: response rate, confirmed meeting and location for each team.'
-  - path: .camp/screenshots/07-calendar.png
-    caption: 'The confirmed meeting in a group member''s calendar, next to the "Mark your availability" deadline.'
-  - path: .camp/screenshots/08-activity-settings.png
-    caption: 'Activity settings: timezone, date range, daily window, slot size and meeting length, with a warning once people have answered.'
+    caption: 'A confirmed meeting with its location link, View in calendar, and Change time, Send meeting details and Cancel.'
+  - path: .camp/screenshots/06-other-timezone.png
+    caption: 'A member in Tokyo sees the same slots at their own local times; times a necessary participant cannot make are greyed.'
+  - path: .camp/screenshots/07-teacher-overview.png
+    caption: 'The overview of all groups: response rate, confirmed meeting and location, the RSVP date and automatic confirmation.'
+  - path: .camp/screenshots/08-notification.png
+    caption: 'The notification a member gets when a meeting is confirmed: time, length, location and the teacher''s message.'
+  - path: .camp/screenshots/09-calendar.png
+    caption: 'A member''s calendar: the Mark your availability deadline and the confirmed group meeting with its location.'
+  - path: .camp/screenshots/10-activity-settings.png
+    caption: 'Settings: Respond by, reminders, necessary participants, greying out their unavailable times, automatic confirmation.'
 links:
   docs: https://github.com/adamjenkins/moodle-mod_findatime#readme
   issues: https://github.com/adamjenkins/moodle-mod_findatime/issues
